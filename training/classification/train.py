@@ -7,10 +7,6 @@ import os
 from pathlib import Path
 import re
 
-from dotenv import load_dotenv
-load_dotenv(override=True)
-os.environ.setdefault("MLFLOW_TRACKING_URI", os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000"))
-
 import evaluate
 import mlflow
 import numpy as np
@@ -24,7 +20,6 @@ from transformers import (
     EarlyStoppingCallback,
     Trainer,
     TrainingArguments,
-    TrainerCallback,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -111,22 +106,6 @@ class WeightedTrainer(Trainer):
         )(outputs.logits, labels)
         return (loss, outputs) if return_outputs else loss
 
-# ------------------------------------------------------------------ #
-# Odleđivanje enkodera nakon N epoha
-# ------------------------------------------------------------------ #
-
-class UnfreezeEncoderCallback(TrainerCallback):
-    def __init__(self, unfreeze_epoch):
-        self.unfreeze_epoch = unfreeze_epoch
-        self.unfrozen = False
-
-    def on_epoch_begin(self, args, state, control, model=None, **kwargs):
-        if not self.unfrozen and state.epoch >= self.unfreeze_epoch:
-            for param in model.parameters():
-                param.requires_grad = True
-            self.unfrozen = True
-            log.info("Epoch %.0f: encoder unfrozen, full fine-tuning starts", state.epoch)
-
 
 # ------------------------------------------------------------------ #
 # Main
@@ -211,17 +190,6 @@ def main():
             model = base_model
             mlflow.log_param("trainable_params", sum(p.numel() for p in model.parameters()))
 
-        # zamrzni enkoder prvih FREEZE_EPOCHS epoha
-        FREEZE_EPOCHS = 5
-
-        if args.strategy == 'full_ft':
-            # zamrzni sve osim classification heada
-            for name, param in model.named_parameters():
-                if 'classifier' not in name:
-                    param.requires_grad = False
-            frozen_params = sum(p.numel() for p in model.parameters() if not p.requires_grad)
-            log.info("Encoder frozen: %d params frozen for first %d epochs", frozen_params, FREEZE_EPOCHS)
-
         # training args
         training_args = TrainingArguments(
             output_dir=str(output_dir),
@@ -253,10 +221,7 @@ def main():
             tokenizer=tokenizer,
             data_collator=collator,
             compute_metrics=compute_metrics,
-            callbacks=[
-                EarlyStoppingCallback(early_stopping_patience=args.patience),
-                UnfreezeEncoderCallback(unfreeze_epoch=FREEZE_EPOCHS),
-            ],
+            callbacks=[EarlyStoppingCallback(early_stopping_patience=args.patience)],
         )
 
         # treniranje
@@ -300,7 +265,7 @@ def main():
             safe_cat = re.sub(r'[^a-zA-Z0-9_\-\. :/]', '', cat).replace(' ', '_')
             mlflow.log_metric(f"test_f1_{safe_cat}", f1)
 
-        # spremi per-class JSON lokalno
+        # spremi per-class JSON kao artifact
         pc_path = output_dir / "per_class_f1.json"
         output_dir.mkdir(parents=True, exist_ok=True)
         with open(pc_path, "w") as f:
@@ -327,6 +292,43 @@ def main():
 
         log.info("Test macro F1: %.4f", test_results["eval_macro_f1"])
         log.info("Model spreman: %s", best_path)
+
+        test_macro_f1 = test_results["eval_macro_f1"]
+        model_uri = f"runs:/{mlflow.active_run().info.run_id}/cls_model"
+        
+        mlflow.transformers.log_model(
+            transformers_model={
+                "model": trainer.model,
+                "tokenizer": tokenizer,
+            },
+            artifact_path="cls_model",
+            task="text-classification",
+        )
+
+        registered = mlflow.register_model(
+            model_uri=model_uri,
+            name="SciDCC-Classifier",
+        )
+
+        # promoviraj u production samo ako je bolji od trenutnog
+        client = mlflow.MlflowClient()
+        # umjesto transition_model_version_stage, koristi aliases
+        try:
+            prod_version = client.get_model_version_by_alias("SciDCC-Classifier", "production")
+            prod_f1 = client.get_run(prod_version.run_id).data.metrics.get("test_macro_f1", 0)
+            if test_macro_f1 > prod_f1:
+                client.set_registered_model_alias("SciDCC-Classifier", "production", registered.version)
+                log.info("Novi model promoviran u production (F1: %.4f > %.4f)", test_macro_f1, prod_f1)
+            else:
+                client.set_registered_model_alias("SciDCC-Classifier", "staging", registered.version)
+                log.info("Model ide u staging (F1: %.4f <= %.4f)", test_macro_f1, prod_f1)
+        except Exception as e:
+            # prvi model ili alias ne postoji – postavi production
+            client.set_registered_model_alias("SciDCC-Classifier", "production", registered.version)
+            log.info("Model registriran kao production (F1: %.4f)", test_macro_f1)
+        except Exception as e:
+            log.warning("MLflow registry promotion failed: %s", e)
+            
         log.info("MLflow run zatvoren.")
 
 

@@ -3,9 +3,11 @@ import torch
 from pathlib import Path
 from typing import Dict
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import mlflow
 
-MODEL_PATH = "models/cls_full_ft_best"
+FALLBACK_MODEL_PATH = "models/cls_full_ft_best"
 LABEL_MAP_PATH = "data/processed/label_map.json"
+REGISTRY_MODEL_NAME = "SciDCC-Classifier"
 
 class ClassificationService:
     def __init__(self):
@@ -14,20 +16,39 @@ class ClassificationService:
         self.id2label: Dict[int, str] = {}
 
     def load(self):
-        print(f"Loading classification model from {MODEL_PATH}...")
-
         with open(LABEL_MAP_PATH, "r", encoding="utf-8") as f:
             label_map = json.load(f)
         self.id2label = {int(k): v for k, v in label_map["id2label"].items()}
 
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
-        self.model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
+        # pokušaj iz MLflow registrya
+        model_path = self._resolve_model_path()
+
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
         self.model.eval()
 
         if torch.cuda.is_available():
             self.model.cuda()
 
         print(f"Classification model ready! ({len(self.id2label)} classes)")
+
+    def _resolve_model_path(self) -> str:
+        try:
+            mlflow.set_tracking_uri("http://localhost:5000")
+            client = mlflow.MlflowClient()
+            # koristi aliases umjesto stages (MLflow 2.9+)
+            version = client.get_model_version_by_alias(REGISTRY_MODEL_NAME, "production")
+            local_path = mlflow.artifacts.download_artifacts(
+                run_id=version.run_id,
+                artifact_path="cls_model",
+            )
+            print(f"Loaded model from MLflow Registry (run: {version.run_id[:8]}...)")
+            return local_path
+        except Exception as e:
+            print(f"MLflow registry not available ({e}), falling back to local path.")
+
+        print(f"Loading classification model from {FALLBACK_MODEL_PATH}...")
+        return FALLBACK_MODEL_PATH
 
     def predict(self, text: str, top_k: int = 3) -> Dict:
         if self.model is None:

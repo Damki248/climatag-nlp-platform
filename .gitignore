@@ -9,4 +9,4 @@ __pycache__/
 *.pt
 .env
 node_modules/
-frontend/dist/
+frontend/dist/mlflow-artifacts/
