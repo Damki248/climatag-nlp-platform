@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  label-studio:
+    image: heartexlabs/label-studio:1.8.0
+    ports:
+      - "8080:8080"
+    volumes:
+      - label_studio_data:/label-studio/data
+    environment:
+      - LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK=false
+      - LABEL_STUDIO_LEGACY_TOKEN_AUTH=true
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --default-artifact-root /mlflow/artifacts
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+
+volumes:
+  label_studio_data:
+  mlflow_data:

@@ -1,0 +1,12 @@
+data/raw/
+data/processed/
+models/
+mlflow/
+__pycache__/
+*.pyc
+*.bin
+*.safetensors
+*.pt
+.env
+node_modules/
+frontend/dist/
