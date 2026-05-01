@@ -204,6 +204,15 @@ You can get the Label Studio token after starting the service (step 7) and loggi
 
 ## 7. Docker services (Label Studio + MLflow)
 
+Before starting the containers, create the local MLflow artifact directory and set the correct permissions:
+
+```bash
+mkdir -p mlflow-artifacts
+chmod 777 mlflow-artifacts
+```
+
+> This folder is mounted into the MLflow container as the artifact store. Without write permissions, model registration will fail with a `PermissionError`.
+
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 ```
