@@ -144,8 +144,20 @@ def main():
 
     # MLflow setup
     mlflow.set_tracking_uri("http://localhost:5000")
+    
+    # Kreiraj eksperiment s HTTP artifact location (izbjegava permission error)
+    client_setup = mlflow.MlflowClient()
+    try:
+        exp = client_setup.get_experiment_by_name(args.experiment)
+        if exp is None:
+            client_setup.create_experiment(
+                args.experiment,
+                artifact_location=f"mlflow-artifacts:/{args.experiment}"
+            )
+    except Exception:
+        pass
     mlflow.set_experiment(args.experiment)
-
+    
     with mlflow.start_run(run_name=run_label):
 
         # logiraj sve argumente kao params
