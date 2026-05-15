@@ -1,4 +1,4 @@
-# Climate NLP Platform – Upute za pokretanje
+# ClimaTag – Upute za pokretanje
 
 > Magistarski rad – Damjan  
 > Fakultet informatike i digitalnih tehnologija, Rijeka  
@@ -6,210 +6,128 @@
 
 ---
 
-## Sadržaj
-
-1. [Preduvjeti](#preduvjeti)
-2. [Conda environment](#conda-environment)
-3. [Pokretanje Docker servisa](#pokretanje-docker-servisa)
-4. [Pokretanje FastAPI backenda](#pokretanje-fastapi-backenda)
-5. [Testiranje NER endpointa](#testiranje-ner-endpointa)
-6. [Struktura projekta](#struktura-projekta)
-7. [Poznati problemi](#poznati-problemi)
-
----
-
-## Preduvjeti
-
-- Windows 11 + WSL2 (Ubuntu 22.04)
-- Docker Desktop s WSL2 integracijom
-- NVIDIA GPU driver 591.86+ / CUDA 13.1
-- Miniconda (conda 26.1.1+)
-- VS Code s WSL ekstenzijom
-
----
-
-## Conda environment
-
-> ⚠️ Koristi `climtag-env` (Python 3.10) – **ne** `climate-nlp` (Python 3.11)!  
-> `span_marker` biblioteka ne radi s Python 3.11.
+## Brzo pokretanje
 
 ```bash
-# Aktivacija environmenta
+# 1. Aktiviraj environment
 conda activate climtag-env
 
-# Provjera
-python -c "import torch; print(torch.cuda.is_available())"  # mora biti True
+# 2. Pokreni Docker servise (Label Studio + MLflow)
+cd ~/climate-nlp-platform
+docker compose -f docker/docker-compose.yml up -d
+
+# 3. Pokreni backend (servira i frontend i API)
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Ključne verzije paketa
-
-| Paket | Verzija |
-|-------|---------|
-| Python | 3.10 |
-| torch | 2.5.1+cu121 |
-| transformers | 4.50.0 |
-| tokenizers | 0.21.4 |
-| span_marker | 1.7.0 |
-| datasets | 3.0.0 |
-| fastapi | 0.135.3 |
-| mlflow | 3.11.1 |
-| peft | 0.18.1 |
-| accelerate | 1.13.0 |
+Otvori **http://localhost:8000** – ClimaTag UI.
 
 ---
 
-## Pokretanje Docker servisa
+## Servisni način rada (automatski start)
+
+Backend je konfiguriran kao systemd servis i automatski se pokreće pri startu sustava:
 
 ```bash
-cd ~/climate-nlp-platform
+# Status
+sudo systemctl status climatag
 
-# Pokretanje (Label Studio + MLflow)
-docker compose -f docker/docker-compose.yml up -d
+# Restart (npr. nakon retraininga)
+sudo systemctl restart climatag
 
-# Provjera statusa
-docker ps
-
-# Zaustavljanje
-docker compose -f docker/docker-compose.yml down
+# Logovi
+sudo journalctl -u climatag -n 50 --no-pager
 ```
 
-### URL-ovi
+Docker servise (Label Studio, MLflow) treba pokrenuti ručno ako nisu već pokrenuti:
+```bash
+cd ~/climate-nlp-platform
+docker compose -f docker/docker-compose.yml up -d
+```
+
+---
+
+## URL-ovi
 
 | Servis | URL |
 |--------|-----|
+| ClimaTag aplikacija | http://localhost:8000 |
+| FastAPI dokumentacija | http://localhost:8000/docs |
 | Label Studio | http://localhost:8080 |
 | MLflow | http://localhost:5000 |
 
 ---
 
-## Pokretanje FastAPI backenda
+## Stranice aplikacije
+
+| Stranica | Opis |
+|----------|------|
+| **NER** | Named Entity Recognition – unesi tekst, odaberi model (Baseline ili Climate Model), analiziraj entitete |
+| **Annotate** | Human-in-the-loop anotacija – model pre-anotira tekst, ti ispravljaš, šalje se u Label Studio |
+| **Train** | Fine-tuning GLiNER modela na novim anotacijama iz Label Studija |
+| **Experiments** | Pregled MLflow eksperimenata i metrika treninga |
+
+---
+
+## NER modeli
+
+| Model | Opis |
+|-------|------|
+| **Baseline** | GLiNER medium-v2.1 – pretreniran na općim NER datasetima, prepoznaje 28 klimatskih kategorija entiteta |
+| **Climate Model** | Fine-tuned na Climate Model anotacijama (CMIP6, ERA5, SSP scenariji...) – dodaje kategoriju Climate Model uz 28 postojećih |
+
+---
+
+## Dodavanje novih anotacija i retraining
+
+1. Idi na **Annotate** stranicu, unesi tekst, ispravi anotacije, klikni Save
+2. Idi na **Train** stranicu, podesi parametre, klikni **Start training**
+3. Prati napredak u log panelu
+4. Nakon završetka: `sudo systemctl restart climatag`
+
+---
+
+## Conda environment
 
 ```bash
-cd ~/climate-nlp-platform
+# Aktivacija
 conda activate climtag-env
 
-uvicorn backend.app.main:app --reload --port 8000
+# Provjera GPU-a
+python -c "import torch; print(torch.cuda.is_available())"
 ```
 
-Pri startu server automatski učitava NER model u memoriju (~30 sekundi).  
-Pričekaj poruku: `NER model ready!`
+### Ključni paketi
 
-### URL-ovi
-
-| Servis | URL |
-|--------|-----|
-| Health check | http://localhost:8000/health |
-| Swagger UI | http://localhost:8000/docs |
-| NER endpoint | http://localhost:8000/api/ner/predict |
-
----
-
-## Testiranje NER endpointa
-
-### curl
-
-```bash
-curl -X POST http://localhost:8000/api/ner/predict \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Climate change is causing rapid melting of Arctic ice sheets, leading to rising sea levels."}'
-```
-
-### Očekivani odgovor
-
-```json
-{
-  "entities": [
-    {"span": "Climate change", "label": "Meteorological Phenomenon", "score": 0.685, "start": 0, "end": 14},
-    {"span": "Arctic ice sheets", "label": "Geographical Feature", "score": 0.476, "start": 43, "end": 60},
-    {"span": "sea levels", "label": "Quantity", "score": 0.902, "start": 80, "end": 90}
-  ],
-  "count": 3
-}
-```
-
-### Python
-
-```python
-import requests
-
-response = requests.post(
-    "http://localhost:8000/api/ner/predict",
-    json={"text": "Climate change affects Arctic ecosystems."}
-)
-print(response.json())
-```
-
----
-
-## Struktura projekta
-
-```
-climate-nlp-platform/
-├── backend/
-│   └── app/
-│       ├── main.py              # FastAPI app + lifespan (model loading)
-│       ├── api/
-│       │   └── ner.py           # NER router (/api/ner/predict)
-│       ├── services/
-│       │   └── ner_service.py   # NERService singleton
-│       ├── models/              # Pydantic / DB modeli
-│       └── schemas/             # Request/Response sheme
-├── frontend/
-│   └── src/                     # React (TODO)
-├── training/
-│   ├── ner/                     # NER fine-tuning skripte (TODO)
-│   ├── classification/          # Classification fine-tuning (TODO)
-│   └── peft/                    # LoRA / Adapter skripte (TODO)
-├── models/
-│   └── ner_baseline/            # CliReNER-cliscibert_scivocab_uncased
-│       ├── model.safetensors    # ~430 MB
-│       ├── config.json
-│       ├── tokenizer.json
-│       └── vocab.txt
-├── data/
-│   ├── raw/                     # Originalni dataseti (gitignored)
-│   ├── processed/               # Obrađeni dataseti (gitignored)
-│   └── annotations/             # Label Studio exporti
-├── annotation/                  # Label Studio konfiguracije
-├── docker/
-│   └── docker-compose.yml       # Label Studio + MLflow
-└── docs/                        # Dijagrami i bilješke
-```
+| Paket | Verzija |
+|-------|---------|
+| Python | 3.10 |
+| torch | 2.5.1+cu121 |
+| gliner | latest |
+| fastapi | 0.135.3 |
+| mlflow | 3.11.1 |
 
 ---
 
 ## Poznati problemi
 
-### span_marker ne radi s Python 3.11
-**Problem:** `ValueError: text input must be of type str...` bez obzira na format inputa.  
-**Rješenje:** Koristi `climtag-env` (Python 3.10).
-
-### Docker permission denied
-**Problem:** `permission denied while trying to connect to the Docker daemon socket`  
-**Rješenje:**
+**Docker permission denied**
 ```bash
 sudo usermod -aG docker $USER
-# Zatim u PowerShellu:
-wsl --shutdown
-# Otvori novi terminal
+newgrp docker
 ```
 
-### uvicorn: command not found
-**Problem:** Pokušaj pokretanja bez aktiviranog environmenta.  
-**Rješenje:** `conda activate climtag-env` prije pokretanja.
+**Backend ne vidi module 'backend'**
+Pokreni uvicorn iz root direktorija projekta (`~/climate-nlp-platform`), ne iz poddirektorija.
+
+**GLiNER spor bez GPU-a**
+Normalno – CPU inference je 10-20x sporiji. Provjeri `nvidia-smi` i CUDA instalaciju.
+
+**MLflow artifact PermissionError**
+```bash
+chmod 777 ~/climate-nlp-platform/docker/mlflow-artifacts
+```
 
 ---
 
-## TODO – sljedeći koraci
-
-- [ ] SciDCC dataset (čeka se od mentorice)
-- [ ] Classification fine-tuning pipeline
-- [ ] Classification API endpoint (`/api/classify`)
-- [ ] Label Studio integracija
-- [ ] React frontend
-- [ ] Full fine-tuning vs PEFT usporedba
-- [ ] MLflow experiment tracking integracija
-
----
-
-*Zadnje ažuriranje: 7. travnja 2026.*
+*Zadnje ažuriranje: svibanj 2026.*

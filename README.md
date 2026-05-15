@@ -1,46 +1,45 @@
 # ClimaTag – Climate NLP Platform
 
-An end-to-end web platform for **Named Entity Recognition (NER)** and **Text Classification** in the climate science domain, with human-in-the-loop annotation and model retraining support.
+An end-to-end web platform for **Named Entity Recognition (NER)** in the climate science domain, featuring human-in-the-loop annotation, model fine-tuning, and experiment tracking.
 
 Built as part of a Master's thesis at the Faculty of Informatics and Digital Technologies, University of Rijeka.
 
-> **Supervisor:** Prof. dr. sc. Sanda Martinčić-Ipšić  
-> **Models:** [BERTmosphere collection](https://huggingface.co/collections/P0L3/bertmosphere-681db99388ca86d430f14347) (CliReBERT, CliSciBERT, SciClimateBERT)
+> **Supervisor:** Prof. dr. sc. Sanda Martinčić-Ipšić
 
 ---
 
 ## What the platform does
 
-- **NER** – Recognises 28 climate-domain entity categories (chemicals, locations, organisms, quantities, etc.) using the CliReNER dataset and a SpanMarker + CliSciBERT model
-- **Text classification** – Classifies climate-related articles into 20 topic categories (SciDCC dataset) using SciClimateBERT
-- **Human-in-the-loop annotation** – Model pre-annotates text; user corrects in the ClimaTag UI; corrections are pushed to Label Studio
-- **Experiment tracking** – All training runs logged to MLflow (metrics, hyperparameters, per-class F1)
+- **NER** – Recognises 28 climate-domain entity categories (chemicals, locations, organisms, quantities, etc.) plus a custom **Climate Model** category (CMIP6, ERA5, SSP scenarios, etc.) using GLiNER
+- **Human-in-the-loop annotation** – Model pre-annotates text; user corrects in the ClimaTag UI; corrections are pushed to Label Studio for storage
+- **In-app fine-tuning** – Retrain the GLiNER model on new annotations directly from the UI, with live progress tracking
+- **Experiment tracking** – All training runs logged to MLflow (metrics, hyperparameters, Climate Model F1)
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  React Frontend (ClimaTag)          │
-│         NER  │  Classify  │  Annotate               │
-└──────────────────────┬──────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│           React Frontend (ClimaTag)          │
+│   NER  │  Annotate  │  Train  │  Experiments │
+└──────────────────────┬──────────────────────┘
                        │ HTTP (port 8000)
-┌──────────────────────▼────────────────────────────────┐
-│                  FastAPI Backend                      │
-│   /api/ner/predict  │  /api/classify  │  /api/annotate│
-└──────┬───────────────────────┬────────────────────────┘
-       │                       │
-┌──────▼──────┐       ┌────────▼────────┐
-│  NER Model  │       │   CLS Model     │
-│ (SpanMarker │       │ (SciClimateBERT │
-│ +CliSciBERT)│       │  fine-tuned)    │
-└─────────────┘       └─────────────────┘
-       │                       │
-┌──────▼───────────────────────▼─────────┐
-│  Docker services                       │
-│  Label Studio :8080 │ MLflow :5000     │
-└────────────────────────────────────────┘
+┌──────────────────────▼──────────────────────┐
+│              FastAPI Backend                 │
+│  /api/ner  │  /api/annotation  │  /api/train │
+└──────────────────────┬──────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────┐
+│           GLiNER NER Model                   │
+│  Baseline (urchade/gliner_medium-v2.1)       │
+│  Climate Model (fine-tuned on annotations)   │
+└──────────────────────┬──────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────┐
+│           Docker services                    │
+│   Label Studio :8080  │  MLflow :5000        │
+└─────────────────────────────────────────────┘
 ```
 
 ---
@@ -52,10 +51,9 @@ Built as part of a Master's thesis at the Faculty of Informatics and Digital Tec
 | OS | Linux or WSL2 (Ubuntu 22.04 recommended) |
 | Python | 3.10 (via conda) |
 | CUDA | 12.1 (GPU recommended, CPU works but slow) |
-| Node.js | 18+ |
 | Docker | 24+ with Docker Compose v2 |
 
-> **Note for Windows users:** Run everything inside WSL2. Native Windows is not supported due to ML stack compatibility issues.
+> **Windows users:** Run everything inside WSL2.
 
 ---
 
@@ -65,71 +63,53 @@ Built as part of a Master's thesis at the Faculty of Informatics and Digital Tec
 climate-nlp-platform/
 ├── backend/
 │   └── app/
-│       ├── api/           # FastAPI route handlers (ner, cls, annotation)
-│       ├── services/      # Business logic (ner_service, cls_service, label_studio_service)
-│       └── main.py        # App entry point
-├── frontend/              # React + Vite + Tailwind app (ClimaTag UI)
+│       ├── api/               # FastAPI routers (ner, annotation, train)
+│       ├── services/          # Business logic (ner_service, label_studio_service)
+│       └── main.py            # App entry point + static file serving
+├── frontend/                  # React + Vite + Tailwind (ClimaTag UI)
+│   └── dist/                  # Production build (served by FastAPI)
 ├── training/
-│   └── classification/
-│       └── train.py       # SciDCC fine-tuning script (full FT + LoRA)
-├── notebooks/             # EDA and preprocessing notebooks
+│   └── ner_gliner/
+│       └── train.py           # GLiNER fine-tuning script
 ├── docker/
-│   └── docker-compose.yml # Label Studio + MLflow containers
-├── data/                  # Datasets (not in Git – see below)
-├── models/                # Trained model weights (not in Git – see below)
-├── .env.example           # Environment variable template
+│   └── docker-compose.yml     # Label Studio + MLflow containers
+├── data/
+│   ├── raw/CliReNER_SILVER/   # SILVER NER dataset (parquet)
+│   └── annotations/           # Label Studio exports
+├── models/                    # Model weights (not in Git – too large)
+├── .env.example               # Environment variable template
 └── README.md
 ```
 
-> `data/` and `models/` are excluded from Git (too large). See [Setup](#setup) for how to obtain them.
+> `models/` weights are excluded from Git. See [SETUP.md](SETUP.md) for download instructions.
 
 ---
 
-## Setup
+## Quick start
 
-See **[SETUP.md](SETUP.md)** for full step-by-step instructions covering:
-- Conda environment creation
-- Model download
-- Docker services
-- Backend and frontend startup
+See **[SETUP.md](SETUP.md)** for full setup instructions.
 
----
-
-## Quick start (after full setup)
+After setup, the platform runs on a single port:
 
 ```bash
-# 1. Start Docker services (Label Studio + MLflow)
-cd ~/climate-nlp-platform
+# Start Docker services
 docker compose -f docker/docker-compose.yml up -d
 
-# 2. Start backend (new terminal)
+# Start backend (serves frontend + API)
 conda activate climtag-env
-cd ~/climate-nlp-platform
-uvicorn backend.app.main:app --reload --port 8000
-
-# 3. Start frontend (new terminal)
-cd ~/climate-nlp-platform/frontend
-npm run dev
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
 | Service | URL |
 |---|---|
-| ClimaTag UI | http://localhost:5173 |
+| ClimaTag UI | http://localhost:8000 |
 | FastAPI docs | http://localhost:8000/docs |
 | Label Studio | http://localhost:8080 |
 | MLflow | http://localhost:5000 |
 
 ---
 
-## Training
-
-See **[TRAINING.md](TRAINING.md)** for instructions on running classification fine-tuning experiments (full fine-tuning and LoRA).
-
----
-
 ## Environment variables
-
-Copy `.env.example` to `.env` and fill in your values:
 
 ```bash
 cp .env.example .env
@@ -141,3 +121,10 @@ cp .env.example .env
 | `LABEL_STUDIO_URL` | Default: `http://localhost:8080` |
 | `LABEL_STUDIO_PROJECT_ID` | Project ID in Label Studio (usually `1`) |
 | `MLFLOW_TRACKING_URI` | Default: `http://localhost:5000` |
+| `ALLOWED_ORIGINS` | CORS origins, comma-separated. Default: `http://localhost:5173` |
+
+---
+
+## Training
+
+See **[TRAINING.md](TRAINING.md)** for GLiNER fine-tuning instructions (CLI and in-app).

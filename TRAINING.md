@@ -1,169 +1,106 @@
 # Training Guide
 
-This guide covers running classification fine-tuning experiments on the SciDCC dataset.
-
-> **NER model training** is not covered here – the NER model (CliReNER) is used as a pre-trained baseline without further fine-tuning in this project.
+This guide covers fine-tuning the GLiNER model on new Climate Model annotations.
 
 ---
 
-## Prerequisites
+## Overview
 
-- Conda environment `climtag-env` activated
-- SciDCC dataset preprocessed (see [SETUP.md](SETUP.md) step 5)
-- MLflow running (`docker compose -f docker/docker-compose.yml up -d`)
+ClimaTag uses **GLiNER** (Generalist and Lightweight NER) for named entity recognition. The fine-tuning strategy uses **experience replay**: a mix of the CliReNER SILVER dataset (28 existing categories) and new Climate Model annotations, preventing catastrophic forgetting of old categories while learning the new one.
+
+The production model (`models/ner_gliner_climate_model`) was fine-tuned with:
+- 290 Climate Model annotations
+- 803 SILVER dataset samples (silver_ratio=5:1 × 290 ≈ 1450, capped at available)
+- 10 epochs, LR=5e-6, batch=8
+- Results: **Climate Model F1 = 93.0%** (Precision 97.2%, Recall 89.1%)
 
 ---
 
-## Classification training script
+## Option A – In-app fine-tuning (recommended)
 
-All experiments run through a single script:
+1. Open ClimaTag at http://localhost:8000
+2. Go to the **Annotate** tab and add new Climate Model annotations
+3. Go to the **Train** tab
+4. Configure parameters and click **Start training**
+5. Monitor progress in the live log panel
+6. When finished, restart the backend to load the new model:
+   ```bash
+   sudo systemctl restart climatag
+   # or if running manually: Ctrl+C and restart uvicorn
+   ```
+
+---
+
+## Option B – CLI fine-tuning
 
 ```bash
 conda activate climtag-env
-cd ~/climate-nlp-platform
+cd climate-nlp-platform
 
-python training/classification/train.py [OPTIONS]
+python -m training.ner_gliner.train \
+  --cm_annotations  data/annotations/climate_model_annotations.json \
+  --base_model      models/ner_gliner_baseline \
+  --output_model    models/ner_gliner_climate_model \
+  --epochs          10 \
+  --lr              5e-6 \
+  --batch           8 \
+  --silver_ratio    5 \
+  --experiment      climtag_ner_gliner \
+  --run_name        gliner_v2
 ```
 
 ### Key arguments
 
 | Argument | Default | Description |
 |---|---|---|
-| `--input` | `title_summary` | Input text field: `body` or `title_summary` |
-| `--strategy` | `full_ft` | Fine-tuning strategy: `full_ft` or `lora` |
-| `--model` | `P0L3/SciClimateBERT` | HuggingFace model ID or local path |
+| `--cm_annotations` | `data/annotations/climate_model_annotations.json` | Label Studio export with Climate Model annotations |
+| `--base_model` | `models/ner_gliner_baseline` | Starting model |
+| `--output_model` | `models/ner_gliner_climate_model` | Where to save the fine-tuned model |
+| `--epochs` | `10` | Number of training epochs |
 | `--lr` | `5e-6` | Learning rate |
-| `--epochs` | `30` | Maximum training epochs |
-| `--batch` | `8` | Batch size per device |
-| `--warmup` | `0.2` | Warmup ratio (fraction of total steps) |
-| `--patience` | `5` | Early stopping patience (epochs) |
-| `--weight_exp` | `0.7` | Class weight exponent (0.7 = moderate, 1.0 = fully balanced) |
-| `--experiment` | `scidcc_classification` | MLflow experiment name |
-| `--run_name` | auto | MLflow run name |
-
-### LoRA-specific arguments
-
-| Argument | Default | Description |
-|---|---|---|
-| `--lora_r` | `16` | LoRA rank |
-| `--lora_alpha` | `32` | LoRA alpha scaling |
-| `--lora_dropout` | `0.1` | LoRA dropout |
+| `--batch` | `8` | Batch size |
+| `--silver_ratio` | `5` | SILVER:Climate Model sample ratio |
+| `--val_split` | `0.15` | Validation set fraction |
 
 ---
 
-## Running experiments
+## MLflow tracking
 
-### Best known configuration (full fine-tuning, body input)
+Every run logs to MLflow at http://localhost:5000 under experiment `climtag_ner_gliner`.
 
-This is the current best run with macro F1 = **0.4208** on the test set:
+**Parameters logged:** base_model, epochs, lr, batch, silver_ratio, train_size, val_size, cm_samples, seed
 
-```bash
-python training/classification/train.py \
-  --input body \
-  --strategy full_ft \
-  --lr 2e-5 \
-  --epochs 30 \
-  --batch 16 \
-  --warmup 0.15 \
-  --patience 10 \
-  --weight_exp 0.7 \
-  --experiment scidcc_cls \
-  --run_name full_ft_body_lr2e5_best
-```
+**Metrics logged:**
+- `cm_precision` – Climate Model precision
+- `cm_recall` – Climate Model recall
+- `cm_f1` – Climate Model F1
 
-The best checkpoint is saved to `models/cls_full_ft_best/` automatically.
-
-### LoRA experiment
-
-```bash
-python training/classification/train.py \
-  --input body \
-  --strategy lora \
-  --lr 3e-4 \
-  --epochs 30 \
-  --batch 16 \
-  --warmup 0.1 \
-  --patience 10 \
-  --weight_exp 0.7 \
-  --lora_r 16 \
-  --lora_alpha 32 \
-  --experiment scidcc_cls \
-  --run_name lora_body_r16_lr3e4
-```
-
-### Title+Summary input experiment
-
-```bash
-python training/classification/train.py \
-  --input title_summary \
-  --strategy full_ft \
-  --lr 2e-5 \
-  --epochs 30 \
-  --batch 16 \
-  --warmup 0.15 \
-  --patience 10 \
-  --weight_exp 0.7 \
-  --experiment scidcc_cls \
-  --run_name full_ft_title_summary_lr2e5
-```
+View results in the **Experiments** tab of ClimaTag or directly at http://localhost:5000.
 
 ---
 
-## Tracked metrics (MLflow)
+## Adding annotations
 
-Every run logs the following to MLflow at http://localhost:5000:
+To add new Climate Model annotations for the next training run:
 
-**Parameters (logged once):**
-- model, input, strategy, lr, epochs, batch, warmup, patience, weight_exp, seed, trainable_params
-
-**Per-epoch validation metrics:**
-- `val_macro_f1`, `val_weighted_f1`, `val_accuracy`, `val_loss`
-
-**Test metrics (end of run):**
-- `test_macro_f1`, `test_weighted_f1`, `test_accuracy`
-- `test_f1_{category}` for each of the 20 SciDCC categories
-
----
-
-## Results summary
-
-| Run | Input | Strategy | LR | Test macro F1 |
-|---|---|---|---|---|
-| exp07 (best) | body | full_ft | 2e-5 | **0.4208** |
-| patience10 | body | full_ft | 2e-5 | 0.3865 |
-
-> **Baseline from paper (Spokoyny et al.):** macro F1 = 53.75% (different model/setup)
+1. Go to **Annotate** tab in ClimaTag – enter text and pre-annotate with the current model
+2. Correct any mistakes in the annotation editor
+3. Submit – corrections are sent to Label Studio
+4. Export annotations from Label Studio:
+   ```bash
+   curl -s -H "Authorization: Token YOUR_TOKEN" \
+     "http://localhost:8080/api/projects/1/export?exportType=JSON" \
+     -o data/annotations/climate_model_annotations.json
+   ```
+5. Run fine-tuning (Option A or B above)
 
 ---
 
 ## Hardware requirements
 
-| Setup | Training time (est.) |
+| Setup | Training time (10 epochs, ~1000 samples) |
 |---|---|
-| RTX 3050 8GB, batch=16 | ~3–5 min/epoch |
-| CPU only | Very slow – not recommended for full runs |
+| RTX 3050 8GB, batch=8 | ~5–8 minutes |
+| CPU only | ~30–60 minutes |
 
-If you run out of GPU memory, reduce `--batch` to `8` or `4`.
-
----
-
-## Output files
-
-After a training run completes, you'll find:
-
-```
-models/
-└── cls_full_ft_best/       # Best checkpoint (by val macro F1)
-    ├── config.json
-    ├── model.safetensors
-    ├── tokenizer_config.json
-    ├── tokenizer.json
-    └── vocab.json
-
-training/classification/
-└── results/
-    ├── per_class_f1.json   # Per-category F1 on test set
-    └── test_results.json   # Full test metrics
-```
-
-The backend (`cls_service.py`) always loads from `models/cls_full_ft_best/` on startup.
+If you run out of GPU memory, reduce `--batch` to `4`.

@@ -1,6 +1,6 @@
 # Setup Guide
 
-This guide walks through setting up the ClimaTag platform from scratch on a fresh machine (Linux or WSL2 on Windows).
+Step-by-step setup for ClimaTag on a fresh Linux or WSL2 machine.
 
 ---
 
@@ -8,14 +8,12 @@ This guide walks through setting up the ClimaTag platform from scratch on a fres
 
 1. [Prerequisites](#1-prerequisites)
 2. [Clone the repository](#2-clone-the-repository)
-3. [Python environment (conda)](#3-python-environment-conda)
+3. [Python environment](#3-python-environment-conda)
 4. [Download models](#4-download-models)
-5. [Dataset setup](#5-dataset-setup)
-6. [Environment variables](#6-environment-variables)
-7. [Docker services](#7-docker-services-label-studio--mlflow)
-8. [Backend](#8-backend)
-9. [Frontend](#9-frontend)
-10. [Verify everything works](#10-verify-everything-works)
+5. [Environment variables](#5-environment-variables)
+6. [Docker services](#6-docker-services-label-studio--mlflow)
+7. [Backend](#7-backend)
+8. [Verify](#8-verify-everything-works)
 
 ---
 
@@ -23,54 +21,38 @@ This guide walks through setting up the ClimaTag platform from scratch on a fres
 
 ### Linux / WSL2 (Ubuntu 22.04)
 
-Install system dependencies:
-
 ```bash
-sudo apt update && sudo apt install -y git curl wget unzip
+sudo apt update && sudo apt install -y git curl wget
 ```
 
-### Windows users → use WSL2
+### Windows users → WSL2
 
-All commands in this guide run inside **WSL2 (Ubuntu 22.04)**. Do not run them in PowerShell or CMD.
-
-Install WSL2 if you haven't already:
+Run all commands inside **WSL2 (Ubuntu 22.04)**. Install if needed:
 ```powershell
-# In PowerShell (Admin)
+# PowerShell (Admin)
 wsl --install
 ```
 
-### CUDA (optional but recommended)
+### CUDA (recommended)
 
-If you have an NVIDIA GPU, install CUDA 12.1 drivers on the host system. The conda environment will install the correct PyTorch build automatically.
-
-To verify GPU is visible inside WSL2:
+Install NVIDIA drivers for your GPU. Verify GPU visibility inside WSL2:
 ```bash
 nvidia-smi
 ```
 
 ### Docker
 
-Install Docker Desktop (Windows) with WSL2 integration enabled, or Docker Engine directly on Linux:
-
 ```bash
 # Linux
 curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
-# Log out and back in, or run: newgrp docker
+newgrp docker
 ```
 
 Verify:
 ```bash
-docker --version       # 24+
-docker compose version # 2.x
-```
-
-### Node.js (for frontend)
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-node --version  # 20.x
+docker --version        # 24+
+docker compose version  # 2.x
 ```
 
 ---
@@ -86,7 +68,7 @@ cd climate-nlp-platform
 
 ## 3. Python environment (conda)
 
-### Install Miniconda (if not installed)
+### Install Miniconda
 
 ```bash
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -95,7 +77,7 @@ eval "$($HOME/miniconda3/bin/conda shell.bash hook)"
 conda init bash && source ~/.bashrc
 ```
 
-### Create the environment
+### Create environment
 
 ```bash
 conda create -n climtag-env python=3.10 -y
@@ -106,13 +88,12 @@ conda activate climtag-env
 
 ```bash
 pip install torch==2.5.1 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-pip install transformers==4.50.0 datasets peft accelerate
-pip install span_marker==1.7.0
-pip install fastapi uvicorn python-dotenv
-pip install mlflow evaluate scikit-learn
+pip install gliner
+pip install fastapi uvicorn python-dotenv requests
+pip install mlflow pandas pyarrow
 ```
 
-Verify GPU (if available):
+Verify GPU:
 ```bash
 python -c "import torch; print(torch.cuda.is_available())"
 # Expected: True
@@ -122,196 +103,166 @@ python -c "import torch; print(torch.cuda.is_available())"
 
 ## 4. Download models
 
-Models are too large for Git and must be downloaded manually.
+Models are not in Git (too large). Download manually:
 
-### NER model (CliReNER)
-
-```bash
-mkdir -p models/ner_baseline
-```
-
-Download from Hugging Face and place in `models/ner_baseline/`:
+### GLiNER baseline
 
 ```bash
-# Option A: using huggingface_hub
+mkdir -p models/ner_gliner_baseline
 python -c "
 from huggingface_hub import snapshot_download
 snapshot_download(
-    repo_id='P0L3/CliReNER-cliscibert_scivocab_uncased',
-    local_dir='models/ner_baseline'
+    repo_id='urchade/gliner_medium-v2.1',
+    local_dir='models/ner_gliner_baseline'
 )
 "
 ```
 
-### Classification model (SciClimateBERT fine-tuned)
+### GLiNER Climate Model (fine-tuned)
 
-The fine-tuned classification model is not on Hugging Face – it is produced by the training script.
+This model is produced by the fine-tuning pipeline. To create it:
+1. Add Climate Model annotations in Label Studio (see [TRAINING.md](TRAINING.md))
+2. Run fine-tuning via the **Train** tab in ClimaTag UI, or via CLI
 
-To train it from scratch, see [TRAINING.md](TRAINING.md).
+Until fine-tuned, the platform falls back to the baseline model automatically.
 
-If you have a pre-trained checkpoint, place it at:
-```
-models/cls_full_ft_best/
-├── config.json
-├── model.safetensors (or pytorch_model.bin)
-├── tokenizer_config.json
-├── tokenizer.json
-└── vocab.json
-```
+### CliReNER SILVER dataset (for fine-tuning)
 
----
-
-## 5. Dataset setup
-
-### SciDCC (classification)
-
-The SciDCC dataset (CSV) must be preprocessed before training or serving.
-
-1. Place the raw `SciDCC.csv` in `data/raw/`
-2. Run the preprocessing notebook:
-   ```bash
-   conda activate climtag-env
-   jupyter notebook notebooks/02_SciDCC_Preprocessing.ipynb
-   ```
-   This creates:
-   - `data/processed/hf_body/` – HuggingFace DatasetDict (body input)
-   - `data/processed/hf_title_summary/` – HuggingFace DatasetDict (title+summary input)
-   - `data/processed/label_map.json` – label ↔ id mapping
-   - `data/processed/class_weights.json` – weights for imbalanced training
-
-> The backend's classification service reads `data/processed/label_map.json` at startup. This file must exist before starting the backend.
+Required only for retraining. Place in `data/raw/CliReNER_SILVER/`:
+- `train-00000-of-00001.parquet`
+- `validation-00000-of-00001.parquet`
+- `test-00000-of-00001.parquet`
 
 ---
 
-## 6. Environment variables
+## 5. Environment variables
 
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env`:
-
 ```env
-LABEL_STUDIO_TOKEN=<your_token>        # from Label Studio → Account → Access Token
+LABEL_STUDIO_TOKEN=<your_token>
 LABEL_STUDIO_URL=http://localhost:8080
 LABEL_STUDIO_PROJECT_ID=1
 MLFLOW_TRACKING_URI=http://localhost:5000
+ALLOWED_ORIGINS=http://localhost:8000
 ```
 
-You can get the Label Studio token after starting the service (step 7) and logging in.
+Get the Label Studio token after starting the service (step 6).
 
 ---
 
-## 7. Docker services (Label Studio + MLflow)
+## 6. Docker services (Label Studio + MLflow)
 
-Before starting the containers, create the local MLflow artifact directory and set the correct permissions:
+### Create MLflow artifact directory
 
 ```bash
-mkdir -p mlflow-artifacts
-chmod 777 mlflow-artifacts
+mkdir -p docker/mlflow-artifacts
+chmod 777 docker/mlflow-artifacts
 ```
 
-> This folder is mounted into the MLflow container as the artifact store. Without write permissions, model registration will fail with a `PermissionError`.
+> Without this, MLflow artifact uploads will fail with a `PermissionError`.
+
+### Start services
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-Wait ~30 seconds for services to start, then verify:
+Wait ~30 seconds, then verify:
 
-| Service | URL | Expected |
-|---|---|---|
-| Label Studio | http://localhost:8080 | Login page |
-| MLflow | http://localhost:5000 | Experiment list |
+| Service | URL |
+|---|---|
+| Label Studio | http://localhost:8080 |
+| MLflow | http://localhost:5000 |
 
 ### Label Studio first-time setup
 
-1. Open http://localhost:8080
-2. Register an account (any email/password)
-3. Go to **Account & Settings → Access Token** → copy the token
-4. Paste it as `LABEL_STUDIO_TOKEN` in your `.env`
-5. Create a new project (name it anything, e.g. "ClimaTag NER")
-6. Note the project ID from the URL (`/projects/1/` → ID is `1`)
-7. Update `LABEL_STUDIO_PROJECT_ID` in `.env` if different
+1. Open http://localhost:8080 and register an account
+2. Go to **Account & Settings → Access Token** → copy the token
+3. Paste it as `LABEL_STUDIO_TOKEN` in `.env`
+4. Create a new project (e.g. "ClimaTag NER")
+5. Add the NER labeling interface under **Settings → Labeling Interface**:
 
-### Stopping services
-
-```bash
-docker compose -f docker/docker-compose.yml down
+```xml
+<View>
+  <Text name="text" value="$text"/>
+  <Labels name="label" toName="text">
+    <Label value="Asset" background="#8B4513"/>
+    <Label value="Chemical" background="#4169E1"/>
+    <Label value="Climate Model" background="#22c55e"/>
+    <Label value="Disease" background="#DC143C"/>
+    <Label value="Ecosystem" background="#228B22"/>
+    <Label value="Location" background="#FF8C00"/>
+    <Label value="Organism" background="#9370DB"/>
+    <Label value="Person" background="#708090"/>
+    <Label value="Quantity" background="#20B2AA"/>
+  </Labels>
+</View>
 ```
-
-Data is persisted in Docker volumes (`label_studio_data`, `mlflow_data`) and survives restarts.
 
 ---
 
-## 8. Backend
+## 7. Backend
+
+The backend serves both the API and the React frontend (production build).
 
 ```bash
 conda activate climtag-env
-cd ~/climate-nlp-platform   # or wherever you cloned
-uvicorn backend.app.main:app --reload --port 8000
+cd climate-nlp-platform
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
-On startup, the backend loads both models into memory. With a GPU you'll see:
+At startup you should see:
 ```
-Loading NER model from models/ner_baseline...
-NER model ready!
-Loading classification model from models/cls_full_ft_best...
-Classification model ready! (20 classes)
+Loading GLiNER model from models/ner_gliner_climate_model...
+GLiNER model ready! (active: climate_model)
 ```
 
-Verify at http://localhost:8000/health → `{"status": "ok", "version": "0.1.0"}`
+Or if the fine-tuned model doesn't exist yet:
+```
+Loading GLiNER model from models/ner_gliner_baseline...
+GLiNER model ready! (active: baseline)
+```
 
-Interactive API docs: http://localhost:8000/docs
-
-### Common issues
-
-**`ModuleNotFoundError: No module named 'backend'`**  
-Make sure you run uvicorn from the project root (`~/climate-nlp-platform`), not from inside `backend/`.
-
-**`CUDA out of memory`**  
-Both models are loaded simultaneously. If you have less than 8GB VRAM, edit `ner_service.py` and `cls_service.py` to remove the `.cuda()` call – models will run on CPU (slower).
-
-**`FileNotFoundError: models/cls_full_ft_best`**  
-The classification model is not downloaded. See [step 4](#4-download-models) or [TRAINING.md](TRAINING.md).
-
----
-
-## 9. Frontend
+### Run as a system service (optional, for production)
 
 ```bash
-cd frontend
-npm install
-npm run dev
+sudo cp climatag.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable climatag
+sudo systemctl start climatag
 ```
-
-Open http://localhost:5173
-
-The frontend expects the backend at `http://localhost:8000`. If you change the backend port, update the API base URL in `frontend/src/`.
 
 ---
 
-## 10. Verify everything works
-
-Run through this checklist:
+## 8. Verify everything works
 
 ```
-[ ] http://localhost:5173     – ClimaTag UI loads
-[ ] http://localhost:8000/docs – FastAPI docs load
-[ ] http://localhost:8080     – Label Studio login page
-[ ] http://localhost:5000     – MLflow experiment list
+[ ] http://localhost:8000        – ClimaTag UI loads
+[ ] http://localhost:8000/docs   – FastAPI docs load
+[ ] http://localhost:8000/health – returns {"status": "ok"}
+[ ] http://localhost:8080        – Label Studio login page
+[ ] http://localhost:5000        – MLflow experiment list
 
 [ ] NER page: paste a climate sentence → entities appear
-[ ] Classify page: paste text → top-3 categories appear
-[ ] Annotate page: text loads with pre-annotated entities
+[ ] Annotate page: pre-annotation works
+[ ] Train page: annotation count shows
+[ ] Experiments page: GLiNER runs visible
 ```
 
-If any service fails, check its logs:
+### Troubleshooting
 
+**`ModuleNotFoundError: No module named 'backend'`**
+Run uvicorn from the project root, not from inside `backend/`.
+
+**`CUDA out of memory`**
+GLiNER medium uses ~2GB VRAM. If you have less, remove `.to("cuda")` in `ner_service.py` to run on CPU (slower).
+
+**Docker service logs**
 ```bash
-# Backend logs – visible in the terminal where uvicorn is running
-
-# Docker service logs
 docker compose -f docker/docker-compose.yml logs label-studio
 docker compose -f docker/docker-compose.yml logs mlflow
 ```
