@@ -98,8 +98,8 @@ conda init bash && source ~/.bashrc
 ### Create the environment
 
 ```bash
-conda create -n spanmarker-env python=3.10 -y
-conda activate spanmarker-env
+conda create -n climtag-env python=3.10 -y
+conda activate climtag-env
 ```
 
 ### Install dependencies
@@ -170,7 +170,7 @@ The SciDCC dataset (CSV) must be preprocessed before training or serving.
 1. Place the raw `SciDCC.csv` in `data/raw/`
 2. Run the preprocessing notebook:
    ```bash
-   conda activate spanmarker-env
+   conda activate climtag-env
    jupyter notebook notebooks/02_SciDCC_Preprocessing.ipynb
    ```
    This creates:
@@ -247,7 +247,7 @@ Data is persisted in Docker volumes (`label_studio_data`, `mlflow_data`) and sur
 ## 8. Backend
 
 ```bash
-conda activate spanmarker-env
+conda activate climtag-env
 cd ~/climate-nlp-platform   # or wherever you cloned
 uvicorn backend.app.main:app --reload --port 8000
 ```

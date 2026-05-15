@@ -103,7 +103,7 @@ cd ~/climate-nlp-platform
 docker compose -f docker/docker-compose.yml up -d
 
 # 2. Start backend (new terminal)
-conda activate spanmarker-env
+conda activate climtag-env
 cd ~/climate-nlp-platform
 uvicorn backend.app.main:app --reload --port 8000
 

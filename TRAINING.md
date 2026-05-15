@@ -8,7 +8,7 @@ This guide covers running classification fine-tuning experiments on the SciDCC d
 
 ## Prerequisites
 
-- Conda environment `spanmarker-env` activated
+- Conda environment `climtag-env` activated
 - SciDCC dataset preprocessed (see [SETUP.md](SETUP.md) step 5)
 - MLflow running (`docker compose -f docker/docker-compose.yml up -d`)
 
@@ -19,7 +19,7 @@ This guide covers running classification fine-tuning experiments on the SciDCC d
 All experiments run through a single script:
 
 ```bash
-conda activate spanmarker-env
+conda activate climtag-env
 cd ~/climate-nlp-platform
 
 python training/classification/train.py [OPTIONS]

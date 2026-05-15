@@ -30,12 +30,12 @@
 
 ## Conda environment
 
-> ⚠️ Koristi `spanmarker-env` (Python 3.10) – **ne** `climate-nlp` (Python 3.11)!  
+> ⚠️ Koristi `climtag-env` (Python 3.10) – **ne** `climate-nlp` (Python 3.11)!  
 > `span_marker` biblioteka ne radi s Python 3.11.
 
 ```bash
 # Aktivacija environmenta
-conda activate spanmarker-env
+conda activate climtag-env
 
 # Provjera
 python -c "import torch; print(torch.cuda.is_available())"  # mora biti True
@@ -86,7 +86,7 @@ docker compose -f docker/docker-compose.yml down
 
 ```bash
 cd ~/climate-nlp-platform
-conda activate spanmarker-env
+conda activate climtag-env
 
 uvicorn backend.app.main:app --reload --port 8000
 ```
@@ -182,7 +182,7 @@ climate-nlp-platform/
 
 ### span_marker ne radi s Python 3.11
 **Problem:** `ValueError: text input must be of type str...` bez obzira na format inputa.  
-**Rješenje:** Koristi `spanmarker-env` (Python 3.10).
+**Rješenje:** Koristi `climtag-env` (Python 3.10).
 
 ### Docker permission denied
 **Problem:** `permission denied while trying to connect to the Docker daemon socket`  
@@ -196,7 +196,7 @@ wsl --shutdown
 
 ### uvicorn: command not found
 **Problem:** Pokušaj pokretanja bez aktiviranog environmenta.  
-**Rješenje:** `conda activate spanmarker-env` prije pokretanja.
+**Rješenje:** `conda activate climtag-env` prije pokretanja.
 
 ---
 

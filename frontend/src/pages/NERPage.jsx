@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import NEREditor from '../components/ner/NEREditor'
 
@@ -9,6 +9,19 @@ export default function NERPage() {
   const [entities, setEntities] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [status, setStatus] = useState(null)
+  const [switching, setSwitching] = useState(false)
+
+  useEffect(() => {
+    fetchStatus()
+  }, [])
+
+  async function fetchStatus() {
+    try {
+      const { data } = await axios.get('/api/ner/status')
+      setStatus(data)
+    } catch {}
+  }
 
   async function handleAnalyze() {
     if (!text.trim()) return
@@ -24,13 +37,60 @@ export default function NERPage() {
     }
   }
 
+  async function handleSwitch(modelName) {
+    setSwitching(true)
+    try {
+      await axios.post('/api/ner/switch', { model: modelName })
+      await fetchStatus()
+      setEntities([])
+    } catch (e) {
+      setError(`Switch failed: ${e.response?.data?.detail ?? e.message}`)
+    } finally {
+      setSwitching(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Named Entity Recognition</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Detect climate-domain entities using CliReNER (28 categories, SpanMarker + CliSciBERT)
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Named Entity Recognition</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Detect climate-domain entities using GLiNER (28 categories + Climate Model)
+          </p>
+        </div>
+
+        {/* Model switch */}
+        {status && (
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2">
+            <span className="text-xs text-gray-500 mr-1">Model:</span>
+            <button
+              onClick={() => handleSwitch('baseline')}
+              disabled={switching || status.active_model === 'baseline'}
+              className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
+                status.active_model === 'baseline'
+                  ? 'bg-green-700 text-white'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              {switching && status.active_model !== 'baseline' ? 'Switching...' : 'Baseline'}
+            </button>
+            <button
+              onClick={() => handleSwitch('climate_model')}
+              disabled={switching || status.active_model === 'climate_model' || !status.climate_model_available}
+              className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
+                status.active_model === 'climate_model'
+                  ? 'bg-green-700 text-white'
+                  : !status.climate_model_available
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+              title={!status.climate_model_available ? 'Climate Model not available' : ''}
+            >
+              {switching && status.active_model !== 'climate_model' ? 'Switching...' : 'Climate Model'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">

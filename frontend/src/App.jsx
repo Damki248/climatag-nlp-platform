@@ -1,6 +1,5 @@
 import { Routes, Route, NavLink } from 'react-router-dom'
 import NERPage from './pages/NERPage'
-import ClassifyPage from './pages/ClassifyPage'
 import AnnotationPage from './pages/AnnotationPage'
 import ExperimentsPage from './pages/ExperimentsPage'
 
@@ -12,7 +11,6 @@ export default function App() {
         <div className="flex gap-6">
           {[
             { to: '/', label: 'NER' },
-            { to: '/classify', label: 'Classify' },
             { to: '/annotate', label: 'Annotate' },
             { to: '/experiments', label: 'Experiments' },
           ].map(({ to, label }) => (
@@ -36,7 +34,6 @@ export default function App() {
       <main className="max-w-4xl mx-auto px-6 py-10">
         <Routes>
           <Route path="/" element={<NERPage />} />
-          <Route path="/classify" element={<ClassifyPage />} />
           <Route path="/annotate" element={<AnnotationPage />} />
           <Route path="/experiments" element={<ExperimentsPage />} />
         </Routes>
