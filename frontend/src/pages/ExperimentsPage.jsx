@@ -3,6 +3,10 @@ import axios from 'axios'
 
 const MLFLOW_URL = 'http://localhost:5000'
 
+// Samo GLiNER eksperimenti – filtriraj stare SpanMarker/klasifikacijske
+const GLINER_EXP_PREFIXES = ['climtag_', 'clirener_gliner', 'clirener_silver', 'clirener_scratch']
+const isGLiNERExperiment = (name) => GLINER_EXP_PREFIXES.some(p => name.startsWith(p))
+
 // MLflow vraća metrike i parametre kao array [{key, value}]
 function normalizeRun(run) {
   const metrics = {}
@@ -147,7 +151,7 @@ export default function ExperimentsPage() {
       const expRes = await axios.get(`${MLFLOW_URL}/api/2.0/mlflow/experiments/search`, {
         params: { max_results: 10 },
       })
-      const experiments = expRes.data.experiments ?? []
+      const experiments = (expRes.data.experiments ?? []).filter(e => isGLiNERExperiment(e.name))
       if (experiments.length === 0) { setRuns([]); return }
 
       const allRuns = []

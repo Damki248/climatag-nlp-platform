@@ -4,6 +4,17 @@ import NEREditor from '../components/ner/NEREditor'
 
 const EXAMPLE = "Arctic sea ice extent has declined significantly due to rising temperatures, with CO2 concentrations at the Mauna Loa Observatory reaching record highs."
 
+const MODEL_INFO = {
+  baseline: {
+    label: 'Baseline',
+    description: 'GLiNER medium v2.1 – pretrained on general NER datasets. Recognises 28 climate-domain entity categories.',
+  },
+  climate_model: {
+    label: 'Climate Model',
+    description: 'Fine-tuned on Climate Model annotations (CMIP6, ERA5, SSP scenarios, etc.). Adds the Climate Model category on top of the 28 baseline categories.',
+  },
+}
+
 export default function NERPage() {
   const [text, setText] = useState('')
   const [entities, setEntities] = useState([])
@@ -12,9 +23,7 @@ export default function NERPage() {
   const [status, setStatus] = useState(null)
   const [switching, setSwitching] = useState(false)
 
-  useEffect(() => {
-    fetchStatus()
-  }, [])
+  useEffect(() => { fetchStatus() }, [])
 
   async function fetchStatus() {
     try {
@@ -50,20 +59,22 @@ export default function NERPage() {
     }
   }
 
+  const activeInfo = MODEL_INFO[status?.active_model] ?? null
+
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Named Entity Recognition</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Detect climate-domain entities using GLiNER (28 categories + Climate Model)
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Named Entity Recognition</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Detect climate-domain entities using GLiNER
+        </p>
+      </div>
 
-        {/* Model switch */}
-        {status && (
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2">
-            <span className="text-xs text-gray-500 mr-1">Model:</span>
+      {/* Model switch + info */}
+      {status && (
+        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium">Active model:</span>
             <button
               onClick={() => handleSwitch('baseline')}
               disabled={switching || status.active_model === 'baseline'}
@@ -85,13 +96,16 @@ export default function NERPage() {
                   ? 'text-gray-300 cursor-not-allowed'
                   : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
               }`}
-              title={!status.climate_model_available ? 'Climate Model not available' : ''}
+              title={!status.climate_model_available ? 'Climate Model not trained yet' : ''}
             >
               {switching && status.active_model !== 'climate_model' ? 'Switching...' : 'Climate Model'}
             </button>
           </div>
-        )}
-      </div>
+          {activeInfo && (
+            <p className="text-xs text-gray-500">{activeInfo.description}</p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-3">
         <textarea

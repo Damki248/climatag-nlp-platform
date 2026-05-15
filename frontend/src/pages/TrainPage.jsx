@@ -25,14 +25,16 @@ export default function TrainPage() {
     silver_ratio: 5,
     run_name:     '',
   })
-  const [status, setStatus]   = useState({ status: 'idle', logs: [] })
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState(null)
+  const [status, setStatus]         = useState({ status: 'idle', logs: [] })
+  const [annotationCount, setAnnotationCount] = useState(null)
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState(null)
   const logsRef = useRef(null)
   const pollRef = useRef(null)
 
   useEffect(() => {
     fetchStatus()
+    fetchAnnotationCount()
     return () => clearInterval(pollRef.current)
   }, [])
 
@@ -46,10 +48,17 @@ export default function TrainPage() {
     try {
       const { data } = await axios.get('/api/train/status')
       setStatus(data)
-      if (data.status === 'running') {
-        startPolling()
-      }
+      if (data.status === 'running') startPolling()
     } catch {}
+  }
+
+  async function fetchAnnotationCount() {
+    try {
+      const { data } = await axios.get('/api/annotation/export')
+      setAnnotationCount(data.task_count ?? 0)
+    } catch {
+      setAnnotationCount(null)
+    }
   }
 
   function startPolling() {
@@ -58,9 +67,7 @@ export default function TrainPage() {
       try {
         const { data } = await axios.get('/api/train/status')
         setStatus(data)
-        if (data.status !== 'running') {
-          clearInterval(pollRef.current)
-        }
+        if (data.status !== 'running') clearInterval(pollRef.current)
       } catch {}
     }, POLL_INTERVAL)
   }
@@ -105,6 +112,31 @@ export default function TrainPage() {
         <p className="text-sm text-gray-500 mt-1">
           Train the GLiNER model on Climate Model annotations from Label Studio
         </p>
+      </div>
+
+      {/* Dataset info */}
+      <div className="bg-white rounded-lg border border-gray-200 px-5 py-4 flex items-center justify-between">
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Training dataset</p>
+          <p className="text-sm text-gray-700">
+            Climate Model annotations from Label Studio
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Combined with CliReNER SILVER dataset using experience replay
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Annotated samples</p>
+          <p className="text-2xl font-bold text-green-700">
+            {annotationCount !== null ? annotationCount : '—'}
+          </p>
+          <button
+            onClick={fetchAnnotationCount}
+            className="text-xs text-gray-400 hover:text-gray-600 mt-0.5"
+          >
+            refresh
+          </button>
+        </div>
       </div>
 
       {/* Config form */}
@@ -160,7 +192,9 @@ export default function TrainPage() {
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Run name <span className="text-gray-400">(optional)</span></label>
+          <label className="block text-xs text-gray-500 mb-1">
+            Run name <span className="text-gray-400">(optional)</span>
+          </label>
           <input
             type="text"
             placeholder="e.g. gliner_v2_lr5e6"
@@ -174,8 +208,9 @@ export default function TrainPage() {
         <div className="flex gap-3 pt-1">
           <button
             onClick={handleStart}
-            disabled={isRunning || loading}
+            disabled={isRunning || loading || annotationCount === 0}
             className="px-5 py-2 bg-green-700 text-white text-sm font-medium rounded-lg hover:bg-green-800 disabled:opacity-40 transition-colors"
+            title={annotationCount === 0 ? 'No annotations in Label Studio' : ''}
           >
             {loading ? 'Starting...' : isRunning ? 'Training...' : 'Start training'}
           </button>
@@ -189,6 +224,11 @@ export default function TrainPage() {
           )}
         </div>
 
+        {annotationCount === 0 && (
+          <p className="text-xs text-amber-600">
+            No annotations found in Label Studio. Add annotations via the Annotate tab first.
+          </p>
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
 
@@ -209,7 +249,6 @@ export default function TrainPage() {
             )}
           </div>
 
-          {/* Progress bar */}
           {(isRunning || isFinished) && (
             <div>
               <div className="w-full bg-gray-100 rounded-full h-2">
@@ -222,7 +261,6 @@ export default function TrainPage() {
             </div>
           )}
 
-          {/* Logs */}
           {status.logs?.length > 0 && (
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Logs</p>
@@ -252,7 +290,7 @@ export default function TrainPage() {
 
           {isFinished && (
             <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
-              Training complete! New model saved to <code className="font-mono">models/ner_gliner_climate_model</code>. 
+              Training complete! New model saved to <code className="font-mono">models/ner_gliner_climate_model</code>.
               Restart the backend to load the updated model.
             </div>
           )}
