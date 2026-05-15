@@ -2,6 +2,7 @@ import { Routes, Route, NavLink } from 'react-router-dom'
 import NERPage from './pages/NERPage'
 import AnnotationPage from './pages/AnnotationPage'
 import ExperimentsPage from './pages/ExperimentsPage'
+import TrainPage from './pages/TrainPage'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
             { to: '/', label: 'NER' },
             { to: '/annotate', label: 'Annotate' },
             { to: '/experiments', label: 'Experiments' },
+            { to: '/train', label: 'Train' },
           ].map(({ to, label }) => (
             <NavLink
               key={to}
@@ -36,6 +38,7 @@ export default function App() {
           <Route path="/" element={<NERPage />} />
           <Route path="/annotate" element={<AnnotationPage />} />
           <Route path="/experiments" element={<ExperimentsPage />} />
+          <Route path="/train" element={<TrainPage />} />
         </Routes>
       </main>
     </div>

@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from typing import List, Dict
 
 load_dotenv(override=True)
-print(f"DEBUG token: '{os.getenv('LABEL_STUDIO_TOKEN')}'")
 
 LS_URL     = os.getenv("LABEL_STUDIO_URL", "http://localhost:8080")
 LS_TOKEN   = os.getenv("LABEL_STUDIO_TOKEN")
@@ -45,8 +44,9 @@ def upload_preannotated(texts: List[str], ner_service, annotations: List[List[Di
     """
     tasks = []
     for i, text in enumerate(texts):
-        if annotations and i < len(annotations) and annotations[i]:
-            # human-corrected anotacije
+        is_human = annotations and i < len(annotations) and annotations[i]
+
+        if is_human:
             entities = annotations[i]
             result_annotations = [
                 {
@@ -63,20 +63,21 @@ def upload_preannotated(texts: List[str], ner_service, annotations: List[List[Di
                 }
                 for j, e in enumerate(entities)
             ]
-            score = 1.0  # human anotacija, maksimalni score
+            score = 1.0
+            model_version = "human-corrected"
         else:
-            # NER model pre-anotacija
             predicted = ner_service.predict(text)
             result_annotations = _ner_to_ls_annotations(text, predicted)
             score = round(
                 sum(e["score"] for e in predicted) / len(predicted), 4
             ) if predicted else 0.0
+            model_version = "GLiNER-climate-model"
 
         task = {
             "data": {"text": text},
             "predictions": [
                 {
-                    "model_version": "human-corrected" if (annotations and i < len(annotations) and annotations[i]) else "CliReNER-baseline",
+                    "model_version": model_version,
                     "score": score,
                     "result": result_annotations,
                 }
@@ -97,10 +98,7 @@ def upload_preannotated(texts: List[str], ner_service, annotations: List[List[Di
 
 
 def export_annotations(status: str = "completed") -> List[Dict]:
-    """
-    Exporta anotacije iz Label Studio projekta.
-    status: 'completed' vraca samo ljudski pregledane, 'all' sve
-    """
+    """Exporta anotacije iz Label Studio projekta."""
     url = f"{LS_URL}/api/projects/{LS_PROJECT}/export"
     params = {"exportType": "JSON"}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -109,21 +107,16 @@ def export_annotations(status: str = "completed") -> List[Dict]:
     tasks = response.json()
 
     if status == "completed":
-        # samo taskovi koje je human anotirao (ima annotation, ne samo prediction)
         tasks = [t for t in tasks if t.get("annotations")]
 
     return tasks
 
 
 def ls_annotations_to_training_format(tasks: List[Dict]) -> List[Dict]:
-    """
-    Konvertira Label Studio export u format pogodan za SpanMarker retraining.
-    Svaki task postaje {tokens, ner_tags} dict.
-    """
+    """Konvertira Label Studio export u GLiNER training format."""
     training_samples = []
     for task in tasks:
         text = task["data"]["text"]
-        # uzimamo zadnju human anotaciju (ako ih ima vise)
         annotations = task.get("annotations", [])
         if not annotations:
             continue
