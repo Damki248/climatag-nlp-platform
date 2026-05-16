@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 
 const LABELS = [
-  'Asset', 'Body of Water', 'Body Part', 'Chemical', 'Date', 'Device',
+  'Asset', 'Body of Water', 'Body Part', 'Chemical', 'Climate Model', 'Date', 'Device',
   'Disease', 'Ecosystem', 'Event', 'Geographical Feature', 'Location',
   'Measuring Device', 'Meteorological Phenomenon', 'Money', 'Natural Disaster',
   'Natural Phenomenon', 'Numerical Value', 'Organism', 'Organization', 'Person',
@@ -13,6 +13,7 @@ const LABEL_COLORS = {
   'Body of Water': 'bg-blue-100 text-blue-800 border-blue-300',
   'Body Part': 'bg-orange-100 text-orange-800 border-orange-300',
   'Chemical': 'bg-purple-100 text-purple-800 border-purple-300',
+  'Climate Model': 'bg-emerald-100 text-emerald-800 border-emerald-400',
   'Date': 'bg-teal-100 text-teal-800 border-teal-300',
   'Device': 'bg-yellow-100 text-yellow-800 border-yellow-300',
   'Disease': 'bg-red-200 text-red-900 border-red-400',
