@@ -3,6 +3,7 @@ import NERPage from './pages/NERPage'
 import AnnotationPage from './pages/AnnotationPage'
 import ExperimentsPage from './pages/ExperimentsPage'
 import TrainPage from './pages/TrainPage'
+import ClassifyPage from './pages/ClassifyPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
             { to: '/annotate', label: 'Annotate' },
             { to: '/experiments', label: 'Experiments' },
             { to: '/train', label: 'Train' },
+            { to: '/classify', label: 'Classify' },
           ].map(({ to, label }) => (
             <NavLink
               key={to}
@@ -39,6 +41,7 @@ export default function App() {
           <Route path="/annotate" element={<AnnotationPage />} />
           <Route path="/experiments" element={<ExperimentsPage />} />
           <Route path="/train" element={<TrainPage />} />
+          <Route path="/classify" element={<ClassifyPage />} />
         </Routes>
       </main>
     </div>

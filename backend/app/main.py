@@ -10,11 +10,14 @@ from backend.app.api.ner import router as ner_router
 from backend.app.api.annotation import router as annotation_router
 from backend.app.services.ner_service import ner_service
 from backend.app.api.train import router as train_router
+from backend.app.api.cls import router as cls_router
+from backend.app.services.cls_service import cls_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ner_service.load()
+    cls_service.load()
     yield
 
 
@@ -39,6 +42,7 @@ app.add_middleware(
 app.include_router(ner_router)
 app.include_router(annotation_router)
 app.include_router(train_router)
+app.include_router(cls_router)
 
 
 @app.get("/health")
