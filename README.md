@@ -14,32 +14,33 @@ Built as part of a Master's thesis at the Faculty of Informatics and Digital Tec
 - **Human-in-the-loop annotation** – Model pre-annotates text; user corrects in the ClimaTag UI; corrections are pushed to Label Studio for storage
 - **In-app fine-tuning** – Retrain the GLiNER model on new annotations directly from the UI, with live progress tracking
 - **Experiment tracking** – All training runs logged to MLflow (metrics, hyperparameters, Climate Model F1)
+- **Text Classification** – Classifies scientific climate texts into 20 topic categories (SciDCC dataset) using SciClimateBERT (full fine-tuning, macro F1=0.4208)
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│           React Frontend (ClimaTag)          │
-│   NER  │  Annotate  │  Train  │  Experiments │
-└──────────────────────┬──────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│           React Frontend (ClimaTag)                        │
+│   NER  │  Annotate  │  Experiments  │  Train  │  Classify  |
+└──────────────────────┬─────────────────────────────────────┘
                        │ HTTP (port 8000)
-┌──────────────────────▼──────────────────────┐
-│              FastAPI Backend                 │
-│  /api/ner  │  /api/annotation  │  /api/train │
-└──────────────────────┬──────────────────────┘
+┌──────────────────────▼─────────────────────────────────────┐
+│              FastAPI Backend                               │
+│  /api/ner  │  /api/annotation  │  /api/train  │  /api/cls  |
+└──────────────────────┬─────────────────────────────────────┘
                        │
-┌──────────────────────▼──────────────────────┐
+┌──────────────────────▼───────────────────────┐
 │           GLiNER NER Model                   │
 │  Baseline (urchade/gliner_medium-v2.1)       │
 │  Climate Model (fine-tuned on annotations)   │
-└──────────────────────┬──────────────────────┘
+└──────────────────────┬───────────────────────┘
                        │
-┌──────────────────────▼──────────────────────┐
+┌──────────────────────▼───────────────────────┐
 │           Docker services                    │
 │   Label Studio :8080  │  MLflow :5000        │
-└─────────────────────────────────────────────┘
+└──────────────────────────────────────────────┘
 ```
 
 ---
@@ -63,8 +64,8 @@ Built as part of a Master's thesis at the Faculty of Informatics and Digital Tec
 climate-nlp-platform/
 ├── backend/
 │   └── app/
-│       ├── api/               # FastAPI routers (ner, annotation, train)
-│       ├── services/          # Business logic (ner_service, label_studio_service)
+│       ├── api/               # FastAPI routers (ner, annotation, train, cls)
+│       ├── services/          # Business logic (ner_service, label_studio_service, cls_service)
 │       └── main.py            # App entry point + static file serving
 ├── frontend/                  # React + Vite + Tailwind (ClimaTag UI)
 │   └── dist/                  # Production build (served by FastAPI)
@@ -76,7 +77,7 @@ climate-nlp-platform/
 ├── data/
 │   ├── raw/CliReNER_SILVER/   # SILVER NER dataset (parquet)
 │   └── annotations/           # Label Studio exports
-├── models/                    # Model weights (not in Git – too large)
+├── models/                    # NER + classification model weights (not in Git – too large)
 ├── .env.example               # Environment variable template
 └── README.md
 ```
@@ -127,4 +128,5 @@ cp .env.example .env
 
 ## Training
 
-See **[TRAINING.md](TRAINING.md)** for GLiNER fine-tuning instructions (CLI and in-app).
+See **[TRAINING.md](TRAINING.md)** for GLiNER fine-tuning instructions.
+Classification model (`SciClimateBERT`) is pre-trained and loaded automatically — no retraining needed.
