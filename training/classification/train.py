@@ -65,7 +65,7 @@ def parse_args():
 def compute_weights(train_dataset, num_labels, exponent):
     labels = np.array(train_dataset["label"])
     counts = np.array([int((labels == i).sum()) for i in range(num_labels)])
-    counts = np.where(counts == 0, 1, counts)  # izbjegni dijeljenje s nulom
+    counts = np.where(counts == 0, 1, counts)  # do not divide with zero
     weights = 1.0 / np.power(counts, exponent)
     weights = weights / weights.mean()
     log.info("Class weights (min=%.4f, max=%.4f)", weights.min(), weights.max())
@@ -73,7 +73,7 @@ def compute_weights(train_dataset, num_labels, exponent):
 
 
 # ------------------------------------------------------------------ #
-# Metrike
+# Metrics
 # ------------------------------------------------------------------ #
 
 metric_f1  = evaluate.load("f1")
@@ -90,7 +90,7 @@ def compute_metrics(eval_pred):
 
 
 # ------------------------------------------------------------------ #
-# Custom Trainer s weighted lossom
+# Custom Trainer with weighted loss
 # ------------------------------------------------------------------ #
 
 class WeightedTrainer(Trainer):
@@ -134,18 +134,18 @@ def main():
     # class weights
     class_weights = compute_weights(ds["train"], num_labels, args.weight_exp)
 
-    # tokenizer i collator
+    # tokenizer and collator
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     collator  = DataCollatorWithPadding(tokenizer=tokenizer)
 
-    # output dir za ovaj run
+    # output dir for current run
     run_label  = args.run_name or f"{args.strategy}_{args.input}_lr{args.lr}_e{args.weight_exp}"
     output_dir = MODELS_DIR / f"cls_{run_label}"
 
     # MLflow setup
     mlflow.set_tracking_uri("http://localhost:5000")
     
-    # Kreiraj eksperiment s HTTP artifact location (izbjegava permission error)
+    # Create an experiment with HTTP artifact location (ensures no permission error)
     client_setup = mlflow.MlflowClient()
     try:
         exp = client_setup.get_experiment_by_name(args.experiment)
@@ -160,7 +160,7 @@ def main():
     
     with mlflow.start_run(run_name=run_label):
 
-        # logiraj sve argumente kao params
+        # log all arguments as parameters
         mlflow.log_params({
             "model":        args.model,
             "input":        args.input,
@@ -220,7 +220,7 @@ def main():
             fp16=torch.cuda.is_available(),
             seed=args.seed,
             logging_steps=50,
-            report_to="none",  # rucno logiramo u MLflow ispod
+            report_to="none",  # manually logged to MLflow
             save_total_limit=2,
         )
 
@@ -236,11 +236,11 @@ def main():
             callbacks=[EarlyStoppingCallback(early_stopping_patience=args.patience)],
         )
 
-        # treniranje
-        log.info("Pocinjem %s treniranje...", args.strategy)
+        # train
+        log.info("Starting %s training...", args.strategy)
         trainer.train()
 
-        # logiraj per-epoch metrike u MLflow
+        # log per-epoch metrics
         for entry in trainer.state.log_history:
             if "eval_macro_f1" in entry:
                 step = int(entry["epoch"])
@@ -251,8 +251,8 @@ def main():
                     "val_loss":        entry["eval_loss"],
                 }, step=step)
 
-        # evaluacija na test setu
-        log.info("Evaluacija na test setu...")
+        # evaluate on test set
+        log.info("Evaluation on test set...")
         test_results = trainer.evaluate(ds["test"])
         preds_out    = trainer.predict(ds["test"])
         pred_labels  = np.argmax(preds_out.predictions, axis=1)
@@ -264,31 +264,31 @@ def main():
             average=None,
         )["f1"]
 
-        # logiraj test metrike
+        # log test metrics
         mlflow.log_metrics({
             "test_macro_f1":    test_results["eval_macro_f1"],
             "test_weighted_f1": test_results["eval_weighted_f1"],
             "test_accuracy":    test_results["eval_accuracy"],
         })
 
-        # logiraj per-class F1 kao metriku i kao artifact
+        # log per-class F1 as metric and as an artifact
         per_class_dict = {id2label[i]: round(float(f), 4) for i, f in enumerate(per_class_f1)}
         for cat, f1 in per_class_dict.items():
             safe_cat = re.sub(r'[^a-zA-Z0-9_\-\. :/]', '', cat).replace(' ', '_')
             mlflow.log_metric(f"test_f1_{safe_cat}", f1)
 
-        # spremi per-class JSON kao artifact
+        # save per-class JSON as artifact
         pc_path = output_dir / "per_class_f1.json"
         output_dir.mkdir(parents=True, exist_ok=True)
         with open(pc_path, "w") as f:
             json.dump(per_class_dict, f, indent=2)
 
-        # spremi model
+        # save model
         best_path = MODELS_DIR / f"cls_{run_label}_best"
         trainer.save_model(str(best_path))
         tokenizer.save_pretrained(str(best_path))
 
-        # spremi test_results.json
+        # save test_results.json
         result_summary = {
             "test_macro_f1":    test_results["eval_macro_f1"],
             "test_weighted_f1": test_results["eval_weighted_f1"],
@@ -303,7 +303,7 @@ def main():
             json.dump(result_summary, f, indent=2)
 
         log.info("Test macro F1: %.4f", test_results["eval_macro_f1"])
-        log.info("Model spreman: %s", best_path)
+        log.info("Model saved: %s", best_path)
 
         test_macro_f1 = test_results["eval_macro_f1"]
         model_uri = f"runs:/{mlflow.active_run().info.run_id}/cls_model"
@@ -322,26 +322,26 @@ def main():
             name="SciDCC-Classifier",
         )
 
-        # promoviraj u production samo ako je bolji od trenutnog
+        # promote to production if this model is better than the current production mod3el
         client = mlflow.MlflowClient()
-        # umjesto transition_model_version_stage, koristi aliases
+        # instead of transition_model_version_stage, use aliases
         try:
             prod_version = client.get_model_version_by_alias("SciDCC-Classifier", "production")
             prod_f1 = client.get_run(prod_version.run_id).data.metrics.get("test_macro_f1", 0)
             if test_macro_f1 > prod_f1:
                 client.set_registered_model_alias("SciDCC-Classifier", "production", registered.version)
-                log.info("Novi model promoviran u production (F1: %.4f > %.4f)", test_macro_f1, prod_f1)
+                log.info("New model promoted to production (F1: %.4f > %.4f)", test_macro_f1, prod_f1)
             else:
                 client.set_registered_model_alias("SciDCC-Classifier", "staging", registered.version)
-                log.info("Model ide u staging (F1: %.4f <= %.4f)", test_macro_f1, prod_f1)
+                log.info("Model set to staging (F1: %.4f <= %.4f)", test_macro_f1, prod_f1)
         except Exception as e:
-            # prvi model ili alias ne postoji – postavi production
+            # if there is no previous model, set as production
             client.set_registered_model_alias("SciDCC-Classifier", "production", registered.version)
-            log.info("Model registriran kao production (F1: %.4f)", test_macro_f1)
+            log.info("Model regostered as production (F1: %.4f)", test_macro_f1)
         except Exception as e:
             log.warning("MLflow registry promotion failed: %s", e)
             
-        log.info("MLflow run zatvoren.")
+        log.info("MLflow run closed.")
 
 
 if __name__ == "__main__":
