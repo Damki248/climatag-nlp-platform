@@ -19,7 +19,7 @@ GLINER_LABELS = [
 class NERService:
     def __init__(self):
         self.model = None
-        self.active_model = None  # "baseline" ili "climate_model"
+        self.active_model = None  # "baseline" or "climate_model"
 
     def load(self):
         """Učitava fine-tuned Climate Model model ako postoji, inače baseline."""
@@ -37,7 +37,7 @@ class NERService:
         print(f"GLiNER model ready! (active: {name})")
 
     def switch_model(self, model_name: str):
-        """Switch između baseline i climate_model."""
+        """Switch between baseline and climate_model."""
         if model_name == "climate_model":
             if not Path(GLINER_MODEL_PATH).exists():
                 raise FileNotFoundError(f"Climate Model not found at {GLINER_MODEL_PATH}")
