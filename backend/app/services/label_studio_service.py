@@ -18,7 +18,7 @@ HEADERS = {
 
 
 def _ner_to_ls_annotations(text: str, entities: List[Dict]) -> List[Dict]:
-    """Konvertira NER output u Label Studio annotation format."""
+    """Converts NER output into Label Studio annotation format."""
     results = []
     for e in entities:
         results.append({
@@ -38,9 +38,9 @@ def _ner_to_ls_annotations(text: str, entities: List[Dict]) -> List[Dict]:
 
 def upload_preannotated(texts: List[str], ner_service, annotations: List[List[Dict]] = None) -> Dict:
     """
-    Prima listu tekstova i opcionalne human anotacije.
-    Ako su annotations None, koristi NER model za pre-anotaciju.
-    Ako su proslijeđene, koristi ih direktno (human-corrected).
+    Takes the list of text as input, along with optional human annotations.
+    If there are None annotations, use NER model for pre-annotation.
+    If annotations are passed, use them directly (human-corrected).
     """
     tasks = []
     for i, text in enumerate(texts):
@@ -98,7 +98,7 @@ def upload_preannotated(texts: List[str], ner_service, annotations: List[List[Di
 
 
 def export_annotations(status: str = "completed") -> List[Dict]:
-    """Exporta anotacije iz Label Studio projekta."""
+    """Export annotations from Label Studio project."""
     url = f"{LS_URL}/api/projects/{LS_PROJECT}/export"
     params = {"exportType": "JSON"}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -113,7 +113,7 @@ def export_annotations(status: str = "completed") -> List[Dict]:
 
 
 def ls_annotations_to_training_format(tasks: List[Dict]) -> List[Dict]:
-    """Konvertira Label Studio export u GLiNER training format."""
+    """Convert Label Studio export into GLiNER training format."""
     training_samples = []
     for task in tasks:
         text = task["data"]["text"]
