@@ -28,7 +28,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS – u produkciji postavi ALLOWED_ORIGINS u .env
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
 app.add_middleware(
@@ -50,14 +49,14 @@ def health_check():
     return {"status": "ok", "version": "0.2.0"}
 
 
-# Serviranje React frontend builda (samo u produkciji)
+# Serving React frontend
 DIST_DIR = Path("frontend/dist")
 if DIST_DIR.exists():
     app.mount("/assets", StaticFiles(directory=str(DIST_DIR / "assets")), name="assets")
 
     @app.get("/{full_path:path}", include_in_schema=False)
     def serve_frontend(full_path: str):
-        # API rute preskačemo
+        # API route is skipped in production
         if full_path.startswith("api/"):
             return {"detail": "Not found"}
         index = DIST_DIR / "index.html"
