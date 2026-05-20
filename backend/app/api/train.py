@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/train", tags=["Training"])
 
-# Status file za praćenje progresa
+# Status file for project tracking
 STATUS_FILE = Path("training_status.json")
 
 
