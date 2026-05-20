@@ -79,8 +79,6 @@ export default function NERAnnotator({ text, initialEntities = [], onSave }) {
     const selectedText = selection.toString().trim()
     if (!selectedText) return
 
-    // nalazimo start offset hodajuci kroz text nodeove kontejnera
-    // preskacemo nodeove koji imaju data-label="true" (labelice entiteta)
     function getOffset(targetNode, targetOffset) {
         let offset = 0
         const walker = document.createTreeWalker(
@@ -88,7 +86,6 @@ export default function NERAnnotator({ text, initialEntities = [], onSave }) {
         NodeFilter.SHOW_TEXT,
         {
             acceptNode(node) {
-            // preskoči text nodeove unutar label spanova
             const parent = node.parentElement
             if (parent && parent.dataset.label === 'true') {
                 return NodeFilter.FILTER_REJECT
@@ -196,11 +193,11 @@ export default function NERAnnotator({ text, initialEntities = [], onSave }) {
 
         {entities.length > 0 && (
           <p className="text-xs text-gray-500">
-            {entities.length} entiteta · Klikni entitet za izmjenu ili brisanje · Selektiraj tekst za dodavanje
+            {entities.length} entities · Click the entity to update or delete an annotation · Select text to add annotation
           </p>
         )}
         {entities.length === 0 && (
-          <p className="text-xs text-gray-400">Selektiraj tekst mišem za dodavanje entiteta</p>
+          <p className="text-xs text-gray-400">Select text to add an anotation</p>
         )}
 
         <button
@@ -212,10 +209,8 @@ export default function NERAnnotator({ text, initialEntities = [], onSave }) {
         </button>
       </div>
 
-      {/* Menu renderiran izvan glavnog diva da onClick ne propagira */}
       {menu && (
         <>
-          {/* overlay koji zatvara menu klikom van */}
           <div
             className="fixed inset-0 z-40"
             onClick={() => setMenu(null)}
