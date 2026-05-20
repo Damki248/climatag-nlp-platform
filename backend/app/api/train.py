@@ -47,7 +47,7 @@ def _read_status() -> dict:
 
 
 def _run_training(request: TrainRequest):
-    """Pokreće trening kao subprocess i prati output."""
+    """Starts the training as a subprocess and tracks the output."""
     run_name = request.run_name or f"gliner_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     _write_status({
@@ -96,7 +96,7 @@ def _run_training(request: TrainRequest):
             if len(logs) > 50:
                 logs = logs[-50:]
 
-            # parsaj epohu iz loga
+            # parse the epoch from log file
             if "epoch" in line.lower():
                 for word in line.split():
                     try:
@@ -174,7 +174,7 @@ def get_status():
 
 @router.post("/reset")
 def reset_status():
-    """Reset statusa nakon failed/finished runa."""
+    """Reset status after failed/finished run"""
     status = _read_status()
     if status.get("status") == "running":
         raise HTTPException(status_code=409, detail="Cannot reset while training is running")
