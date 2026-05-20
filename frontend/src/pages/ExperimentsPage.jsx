@@ -3,11 +3,11 @@ import axios from 'axios'
 
 const MLFLOW_URL = 'http://localhost:5000'
 
-// Samo GLiNER eksperimenti – filtriraj stare SpanMarker/klasifikacijske
+// Only GLiNER experiments
 const GLINER_EXP_PREFIXES = ['climtag_', 'clirener_gliner', 'clirener_silver', 'clirener_scratch']
 const isGLiNERExperiment = (name) => GLINER_EXP_PREFIXES.some(p => name.startsWith(p))
 
-// MLflow vraća metrike i parametre kao array [{key, value}]
+// MLflow returns metrics and parameters as a list
 function normalizeRun(run) {
   const metrics = {}
   for (const { key, value } of run.data?.metrics ?? []) {
@@ -107,7 +107,7 @@ function RunDetail({ run, onClose }) {
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
       </div>
 
-      {/* Climate Model metrike */}
+      {/* Climate Model metrics */}
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Climate Model F1',        value: m.cm_f1        != null ? (m.cm_f1 * 100).toFixed(2) + '%'        : '—' },
@@ -121,7 +121,7 @@ function RunDetail({ run, onClose }) {
         ))}
       </div>
 
-      {/* Parametri */}
+      {/* Parameters */}
       <div>
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Parameters</p>
         <div className="grid grid-cols-2 gap-x-6 gap-y-1">
