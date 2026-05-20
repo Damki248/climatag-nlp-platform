@@ -18,7 +18,7 @@ export default function AnnotationPage() {
     setEntities(null)
     try {
       const { data } = await axios.post('/api/ner/predict', { text })
-      // dodaj id svakom entitetu za tracking
+      // add an ID to each entity for tracking
       setEntities(data.entities.map((e, i) => ({ ...e, id: i })))
     } catch {
       setError('Pre-annotation failed. Is the backend running?')
@@ -31,7 +31,7 @@ export default function AnnotationPage() {
     setSaving(true)
     setError(null)
     try {
-      // konvertiramo u Label Studio format kroz backend
+      // convert Label Studio format through backend
       const { data } = await axios.post('/api/annotation/upload', {
         texts: [text],
         annotations: [finalEntities.map(e => ({
