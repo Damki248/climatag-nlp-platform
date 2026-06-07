@@ -1,0 +1,737 @@
+[
+  {
+    "data": {
+      "text": "CanESM5 projects a 3.1°C increase in global mean surface temperature by 2100 under the SSP5-8.5 scenario."
+    }
+  },
+  {
+    "data": {
+      "text": "The sea ice thickness simulated by CanESM5 in the Arctic declines by 40% between 2020 and 2050."
+    }
+  },
+  {
+    "data": {
+      "text": "Precipitation biases in CanESM5 over South Asia are reduced after bias-correction using quantile mapping."
+    }
+  },
+  {
+    "data": {
+      "text": "We compare CanESM5 and NorESM2 projections of Atlantic overturning circulation weakening under SSP2-4.5."
+    }
+  },
+  {
+    "data": {
+      "text": "CanESM5 overestimates summer precipitation over the Canadian Prairies by approximately 15% relative to observations."
+    }
+  },
+  {
+    "data": {
+      "text": "MIROC6 shows stronger warming in the tropics compared to the CMIP5 ensemble mean under the same forcing."
+    }
+  },
+  {
+    "data": {
+      "text": "The cloud feedback parameterisation in MIROC6 leads to a higher equilibrium climate sensitivity than MIROC5."
+    }
+  },
+  {
+    "data": {
+      "text": "MIROC6 and IPSL-CM6A-LR agree on the sign but differ in the magnitude of projected Arctic warming."
+    }
+  },
+  {
+    "data": {
+      "text": "Ocean heat uptake in MIROC6 is consistent with Argo float observations over the 2005–2020 period."
+    }
+  },
+  {
+    "data": {
+      "text": "We evaluate MIROC6 against ERA5 reanalysis data to assess upper-tropospheric temperature trends."
+    }
+  },
+  {
+    "data": {
+      "text": "MPI-ESM1-2-HR is used to downscale regional precipitation changes over the Mediterranean under SSP3-7.0."
+    }
+  },
+  {
+    "data": {
+      "text": "The land surface scheme in MPI-ESM1-2-LR underestimates evapotranspiration over tropical rainforests."
+    }
+  },
+  {
+    "data": {
+      "text": "MPI-ESM1-2-HR achieves a nominal horizontal resolution of 100 km in the atmosphere and 40 km in the ocean."
+    }
+  },
+  {
+    "data": {
+      "text": "Decadal predictability of North Atlantic sea surface temperatures is higher in MPI-ESM1-2-HR than in lower-resolution variants."
+    }
+  },
+  {
+    "data": {
+      "text": "We use MPI-ESM1-2-LR to investigate the role of soil carbon feedbacks under the SSP1-2.6 mitigation scenario."
+    }
+  },
+  {
+    "data": {
+      "text": "HadGEM3-GC31-LL provides the highest resolution atmosphere-ocean configuration among the UK Met Office contributions to CMIP6."
+    }
+  },
+  {
+    "data": {
+      "text": "The tropical cyclone frequency projected by HadGEM3-GC31-MM is substantially higher than in coarser-resolution models."
+    }
+  },
+  {
+    "data": {
+      "text": "HadGEM3-GC31-LL simulates the observed strengthening of the North Atlantic jet stream with greater fidelity than CMIP5 predecessors."
+    }
+  },
+  {
+    "data": {
+      "text": "We bias-correct daily temperature output from HadGEM3-GC31-LL using the EWEMBI observational dataset."
+    }
+  },
+  {
+    "data": {
+      "text": "HadGEM3-GC31-LL and EC-Earth3-Veg project divergent future changes in European summer blocking frequency."
+    }
+  },
+  {
+    "data": {
+      "text": "GFDL-ESM4 includes interactive carbon cycle components that allow prognostic CO2 concentration in fully coupled mode."
+    }
+  },
+  {
+    "data": {
+      "text": "The ocean biogeochemistry module in GFDL-ESM4 simulates a 15% decline in primary productivity under SSP5-8.5."
+    }
+  },
+  {
+    "data": {
+      "text": "GFDL-ESM4 and GFDL-CM4 share the same atmospheric component but differ in their land and ocean configurations."
+    }
+  },
+  {
+    "data": {
+      "text": "Projected changes in Atlantic hurricane intensity from GFDL-ESM4 suggest a 10–15% increase in Category 4–5 storms by 2100."
+    }
+  },
+  {
+    "data": {
+      "text": "We assess the performance of GFDL-ESM4 in reproducing the El Niño–Southern Oscillation variability over 1950–2014."
+    }
+  },
+  {
+    "data": {
+      "text": "NorESM2-MM is used to examine the radiative forcing attributable to aerosol-cloud interactions over the North Atlantic."
+    }
+  },
+  {
+    "data": {
+      "text": "The carbon cycle in NorESM2 shows a stronger land carbon uptake response to elevated CO2 than the CMIP6 median."
+    }
+  },
+  {
+    "data": {
+      "text": "NorESM2-LM and NorESM2-MM differ primarily in horizontal resolution, with NorESM2-MM offering a 1° ocean grid."
+    }
+  },
+  {
+    "data": {
+      "text": "Sea surface temperature biases in NorESM2 over the Southern Ocean are reduced compared to NorESM1."
+    }
+  },
+  {
+    "data": {
+      "text": "We compare historical temperature trends in NorESM2 with HadCRUT5 observational records from 1850 to 2014."
+    }
+  },
+  {
+    "data": {
+      "text": "ACCESS-CM2 is the Australian contribution to CMIP6, based on the UM atmosphere model coupled to the MOM5 ocean."
+    }
+  },
+  {
+    "data": {
+      "text": "Projected rainfall changes over southern Australia differ substantially between ACCESS-CM2 and the CMIP6 ensemble median."
+    }
+  },
+  {
+    "data": {
+      "text": "ACCESS-CM2 exhibits a strong positive cloud shortwave feedback that results in an equilibrium climate sensitivity of 4.7°C."
+    }
+  },
+  {
+    "data": {
+      "text": "The representation of the Madden-Julian Oscillation in ACCESS-CM2 is improved relative to its CMIP5 predecessor ACCESS1.3."
+    }
+  },
+  {
+    "data": {
+      "text": "We use ACCESS-CM2 output to drive the CABLE land surface model for regional hydrological projections over the Murray-Darling Basin."
+    }
+  },
+  {
+    "data": {
+      "text": "IPSL-CM6A-LR is among the models with the highest equilibrium climate sensitivity in CMIP6, estimated at 4.8°C."
+    }
+  },
+  {
+    "data": {
+      "text": "The stratospheric ozone representation in IPSL-CM6A-LR is prescribed from climatological observations rather than interactively computed."
+    }
+  },
+  {
+    "data": {
+      "text": "IPSL-CM6A-LR projects a 30% increase in extreme precipitation events over Central Europe under SSP3-7.0 by 2080."
+    }
+  },
+  {
+    "data": {
+      "text": "We evaluate IPSL-CM6A-LR against GRACE satellite observations for Greenland ice sheet mass balance trends."
+    }
+  },
+  {
+    "data": {
+      "text": "Ocean circulation changes in IPSL-CM6A-LR are compared to those in EC-Earth3-CC under identical forcing scenarios."
+    }
+  },
+  {
+    "data": {
+      "text": "BCC-CSM2-MR is the Beijing Climate Center contribution to CMIP6, featuring a T106 spectral resolution atmosphere."
+    }
+  },
+  {
+    "data": {
+      "text": "BCC-CSM2-MR underestimates the observed warming trend over the Tibetan Plateau by approximately 0.3°C per decade."
+    }
+  },
+  {
+    "data": {
+      "text": "The aerosol indirect effect in BCC-CSM2-MR is weaker than in most other CMIP6 models, leading to lower historical warming."
+    }
+  },
+  {
+    "data": {
+      "text": "We compare BCC-CSM2-MR and FGOALS-g3 projections of East Asian monsoon precipitation under SSP2-4.5."
+    }
+  },
+  {
+    "data": {
+      "text": "INM-CM5-0 has the lowest equilibrium climate sensitivity among CMIP6 models, estimated at 1.8°C."
+    }
+  },
+  {
+    "data": {
+      "text": "The sea level rise projected by INM-CM5-0 is substantially lower than the CMIP6 multi-model mean under all SSPs."
+    }
+  },
+  {
+    "data": {
+      "text": "INM-CM5-0 shows limited sensitivity of Arctic sea ice to greenhouse gas forcing compared to the ensemble mean."
+    }
+  },
+  {
+    "data": {
+      "text": "EC-Earth3 is a coupled atmosphere-ocean model developed by a consortium of European meteorological institutes."
+    }
+  },
+  {
+    "data": {
+      "text": "EC-Earth3-Veg includes an interactive vegetation module that allows dynamic changes in plant functional types."
+    }
+  },
+  {
+    "data": {
+      "text": "EC-Earth3-CC projects a carbon sink-to-source transition in the Amazon basin by mid-century under SSP5-8.5."
+    }
+  },
+  {
+    "data": {
+      "text": "We use EC-Earth3 large ensemble simulations to separate forced climate change signals from internal variability."
+    }
+  },
+  {
+    "data": {
+      "text": "EC-Earth3 and HadGEM3-GC31-LL show consistent projections of Sahel precipitation increases under SSP1-2.6."
+    }
+  },
+  {
+    "data": {
+      "text": "CESM2 is the Community Earth System Model version 2, developed at the National Center for Atmospheric Research."
+    }
+  },
+  {
+    "data": {
+      "text": "The CESM2 large ensemble provides 100 members to quantify the role of internal variability in regional climate projections."
+    }
+  },
+  {
+    "data": {
+      "text": "CESM2-WACCM includes a fully interactive stratosphere with chemistry relevant for ozone and UV radiation projections."
+    }
+  },
+  {
+    "data": {
+      "text": "Soil moisture trends in CESM2 over North America are sensitive to the choice of land surface parameterisation."
+    }
+  },
+  {
+    "data": {
+      "text": "We evaluate CESM2 sea ice area against passive microwave satellite observations over 1979–2014."
+    }
+  },
+  {
+    "data": {
+      "text": "CESM2 simulates a 20% reduction in summer Arctic sea ice by 2050 under the SSP2-4.5 scenario."
+    }
+  },
+  {
+    "data": {
+      "text": "ERA5 reanalysis provides hourly estimates of atmospheric variables at 31 km horizontal resolution from 1940 to present."
+    }
+  },
+  {
+    "data": {
+      "text": "We use ERA5 as observational reference to evaluate the ability of CMIP6 models to reproduce historical warming trends."
+    }
+  },
+  {
+    "data": {
+      "text": "ERA5 shows a statistically significant increase in the frequency of atmospheric blocking events over Europe since 1980."
+    }
+  },
+  {
+    "data": {
+      "text": "The 2-metre temperature bias of ERA5 over the Tibetan Plateau has been reduced significantly compared to ERA-Interim."
+    }
+  },
+  {
+    "data": {
+      "text": "ERA5 precipitation estimates are used to calibrate the convective parameterisation in the regional model RegCM4."
+    }
+  },
+  {
+    "data": {
+      "text": "Wind speed trends derived from ERA5 suggest a 5–8% increase in offshore wind energy potential over the North Sea by 2050."
+    }
+  },
+  {
+    "data": {
+      "text": "ERA-Interim was the ECMWF reanalysis product widely used until ERA5 became available in 2019."
+    }
+  },
+  {
+    "data": {
+      "text": "We compare ERA-Interim and JRA-55 temperature trends over the Southern Ocean for the period 1979–2010."
+    }
+  },
+  {
+    "data": {
+      "text": "ERA-Interim overestimates precipitation over the central Amazon compared to TRMM satellite observations."
+    }
+  },
+  {
+    "data": {
+      "text": "The transition from ERA-Interim to ERA5 introduced a step change in diagnosed Arctic amplification metrics."
+    }
+  },
+  {
+    "data": {
+      "text": "JRA-55 is the Japan Meteorological Agency reanalysis product covering the period from 1958 to the present."
+    }
+  },
+  {
+    "data": {
+      "text": "JRA-55 and ERA5 agree well on the sign of stratospheric temperature trends but differ in their magnitudes."
+    }
+  },
+  {
+    "data": {
+      "text": "We use JRA-55 as boundary forcing for the CORDEX South Asia regional climate downscaling experiment."
+    }
+  },
+  {
+    "data": {
+      "text": "MERRA-2 is the Modern-Era Retrospective Analysis for Research and Applications, version 2, produced by NASA."
+    }
+  },
+  {
+    "data": {
+      "text": "MERRA-2 aerosol reanalysis is used to constrain radiative forcing estimates in historical model simulations."
+    }
+  },
+  {
+    "data": {
+      "text": "We compare MERRA-2 and ERA5 global precipitable water vapour trends over the period 1980–2020."
+    }
+  },
+  {
+    "data": {
+      "text": "NCEP-CFSR provides global atmospheric reanalysis at T382 spectral resolution covering 1979 to 2010."
+    }
+  },
+  {
+    "data": {
+      "text": "We use NCEP reanalysis as boundary conditions for the WRF regional climate model over East Asia."
+    }
+  },
+  {
+    "data": {
+      "text": "CFSR storm track statistics are compared with those from ERA5 over the North Pacific for the period 1979–2018."
+    }
+  },
+  {
+    "data": {
+      "text": "The CORDEX-AFRICA experiment coordinates regional climate downscaling over the African continent using multiple driving GCMs."
+    }
+  },
+  {
+    "data": {
+      "text": "CORDEX simulations over South Asia project a 20–30% increase in monsoon precipitation variability under RCP 8.5."
+    }
+  },
+  {
+    "data": {
+      "text": "We use six CORDEX-Europe regional models driven by four CMIP5 GCMs to assess uncertainty in future temperature projections."
+    }
+  },
+  {
+    "data": {
+      "text": "CORDEX-EAS provides dynamically downscaled projections at 50 km resolution over East Asia for CMIP5 and CMIP6 driving models."
+    }
+  },
+  {
+    "data": {
+      "text": "RegCM4 is a regional climate model developed by ICTP, capable of resolving mesoscale atmospheric dynamics at 10–50 km resolution."
+    }
+  },
+  {
+    "data": {
+      "text": "We run RegCM4 at 25 km resolution driven by CanESM5 boundary conditions to produce high-resolution projections for West Africa."
+    }
+  },
+  {
+    "data": {
+      "text": "RegCM4 overestimates summer precipitation over the Ethiopian Highlands compared to CHIRPS gauge-based observations."
+    }
+  },
+  {
+    "data": {
+      "text": "RegCM4 and WRF show different responses of Mediterranean summer temperatures to SST forcing from IPSL-CM6A-LR."
+    }
+  },
+  {
+    "data": {
+      "text": "WRF is used in climate mode to dynamically downscale CMIP6 GCM output to 9 km resolution over the contiguous United States."
+    }
+  },
+  {
+    "data": {
+      "text": "The WRF model at 4 km convection-permitting resolution captures the observed diurnal cycle of summer precipitation over the Alps."
+    }
+  },
+  {
+    "data": {
+      "text": "We use WRF-Chem to simulate aerosol-cloud interactions over South and East Asia driven by MPI-ESM1-2-HR boundary forcing."
+    }
+  },
+  {
+    "data": {
+      "text": "WRF projections at 12 km resolution show a 15% increase in extreme precipitation frequency over the western United States by 2070."
+    }
+  },
+  {
+    "data": {
+      "text": "Under RCP 2.6, global mean surface temperatures are projected to stabilise below 2°C above pre-industrial levels by 2100."
+    }
+  },
+  {
+    "data": {
+      "text": "RCP 4.5 represents a stabilisation scenario in which radiative forcing reaches 4.5 W/m² by 2100."
+    }
+  },
+  {
+    "data": {
+      "text": "We compare projected sea level rise contributions from the Greenland ice sheet under RCP 4.5 and RCP 8.5."
+    }
+  },
+  {
+    "data": {
+      "text": "Under RCP 8.5, the CMIP5 multi-model mean projects a warming of 3.7°C with a likely range of 2.6–4.8°C by 2100."
+    }
+  },
+  {
+    "data": {
+      "text": "RCP 6.0 is an intermediate forcing scenario rarely considered in regional impact assessments due to limited model availability."
+    }
+  },
+  {
+    "data": {
+      "text": "Permafrost thaw rates under RCP 2.6 remain substantially lower than under RCP 8.5 across Siberia and northern Canada."
+    }
+  },
+  {
+    "data": {
+      "text": "SSP1-1.9 is the most stringent mitigation scenario, consistent with the 1.5°C Paris Agreement target."
+    }
+  },
+  {
+    "data": {
+      "text": "Under SSP1-2.6, global net-zero CO2 emissions are achieved by mid-century in most integrated assessment models."
+    }
+  },
+  {
+    "data": {
+      "text": "SSP2-4.5 represents a middle-of-the-road scenario assuming moderate societal and technological change."
+    }
+  },
+  {
+    "data": {
+      "text": "We evaluate projected changes in heat wave frequency across Europe under SSP3-7.0 and SSP5-8.5 using the HeatWave Duration Index."
+    }
+  },
+  {
+    "data": {
+      "text": "SSP5-8.5 assumes continued heavy reliance on fossil fuels and results in the highest projected warming among the ScenarioMIP scenarios."
+    }
+  },
+  {
+    "data": {
+      "text": "The difference in projected warming between SSP1-2.6 and SSP5-8.5 by 2100 exceeds 3°C in the CMIP6 median."
+    }
+  },
+  {
+    "data": {
+      "text": "Under SSP3-7.0, the probability of exceeding 2°C of global warming before 2060 is approximately 50% based on CMIP6 models."
+    }
+  },
+  {
+    "data": {
+      "text": "The IPCC AR6 synthesis report assigns medium confidence to the attribution of observed precipitation trends to anthropogenic forcing."
+    }
+  },
+  {
+    "data": {
+      "text": "IPCC AR5 projected a global mean sea level rise of 0.26–0.82 m by 2100 under a range of RCP scenarios."
+    }
+  },
+  {
+    "data": {
+      "text": "The carbon budget consistent with 1.5°C of warming was updated substantially between IPCC AR5 and IPCC AR6."
+    }
+  },
+  {
+    "data": {
+      "text": "IPCC AR6 WG1 Chapter 4 synthesises CMIP6 model projections for the 21st century under all five SSP scenarios."
+    }
+  },
+  {
+    "data": {
+      "text": "Based on IPCC AR5 findings, tropical cyclone intensification is very likely to increase under continued greenhouse gas forcing."
+    }
+  },
+  {
+    "data": {
+      "text": "The GCM ensemble spread in projected Arctic warming is primarily driven by differences in sea ice-albedo feedback strength."
+    }
+  },
+  {
+    "data": {
+      "text": "We derive a process-based emergent constraint on ECS using observational data and a 40-member GCM ensemble."
+    }
+  },
+  {
+    "data": {
+      "text": "AOGCMs participating in ScenarioMIP provide the primary source of projections for IPCC AR6 Chapter 4."
+    }
+  },
+  {
+    "data": {
+      "text": "ESMs differ from earlier GCMs in their explicit representation of biogeochemical cycles and land surface carbon stocks."
+    }
+  },
+  {
+    "data": {
+      "text": "The RCM adds value over driving GCM for precipitation extremes but shows limited added value for large-scale temperature trends."
+    }
+  },
+  {
+    "data": {
+      "text": "Multi-model GCM ensembles systematically underestimate observed Arctic sea ice loss rates over 1979–2019."
+    }
+  },
+  {
+    "data": {
+      "text": "FGOALS-g3 is the Chinese Academy of Sciences contribution to CMIP6, built on the Flexible Global Ocean-Atmosphere-Land System model."
+    }
+  },
+  {
+    "data": {
+      "text": "UKESM1-0-LL includes interactive tropospheric and stratospheric chemistry as part of its fully coupled Earth system configuration."
+    }
+  },
+  {
+    "data": {
+      "text": "SAM0-UNICON replaces the convective parameterisation with a unified convection scheme that treats shallow and deep convection simultaneously."
+    }
+  },
+  {
+    "data": {
+      "text": "AWI-CM-1-1-MR combines the ECHAM6.3 atmosphere with the FESOM2 unstructured-grid ocean model for improved coastal resolution."
+    }
+  },
+  {
+    "data": {
+      "text": "KACE-1-0-G is the Korean contribution to CMIP6, sharing the same atmospheric component as HadGEM3-GC31-LL."
+    }
+  },
+  {
+    "data": {
+      "text": "TaiESM1 is the Taiwan Earth System Model, developed by the Academia Sinica Earth System Modelling Center."
+    }
+  },
+  {
+    "data": {
+      "text": "MRI-ESM2-0 is the Meteorological Research Institute Earth System Model that contributed both historical and ScenarioMIP simulations."
+    }
+  },
+  {
+    "data": {
+      "text": "E3SM-1-0 is the U.S. Department of Energy's Energy Exascale Earth System Model optimised for high-performance computing architectures."
+    }
+  },
+  {
+    "data": {
+      "text": "Historical simulations from 29 CMIP6 models are used to construct the forced component of the observed temperature record."
+    }
+  },
+  {
+    "data": {
+      "text": "We apply delta-change bias correction to temperature and precipitation outputs from five CMIP6 models for hydrological impact assessment."
+    }
+  },
+  {
+    "data": {
+      "text": "The CMIP5 and CMIP6 ensembles project consistent reductions in the frequency of atmospheric blocking over Europe under RCP 8.5 and SSP5-8.5."
+    }
+  },
+  {
+    "data": {
+      "text": "We use the CMIP6 model spread as a measure of uncertainty in regional temperature projections over the Sahel under SSP2-4.5."
+    }
+  },
+  {
+    "data": {
+      "text": "Attribution of the 2021 Pacific Northwest heat dome requires comparison of factual and counterfactual CESM2 simulations."
+    }
+  },
+  {
+    "data": {
+      "text": "The ice-sheet model PISM is forced with surface mass balance fields from RACMO2.3, which is itself driven by ERA5 lateral boundary conditions."
+    }
+  },
+  {
+    "data": {
+      "text": "RACMO2.3 is a regional atmospheric climate model applied over the Greenland ice sheet to compute surface mass balance."
+    }
+  },
+  {
+    "data": {
+      "text": "The NEMO ocean model forms the oceanic component in several CMIP6 models including HadGEM3-GC31-LL and IPSL-CM6A-LR."
+    }
+  },
+  {
+    "data": {
+      "text": "We use MAR regional climate model forced by ERA5 to simulate Greenland ice sheet surface melt under present-day and future climates."
+    }
+  },
+  {
+    "data": {
+      "text": "The ICON model is used in its climate configuration (ICON-ESM) as part of the CMIP6 DECK simulations."
+    }
+  },
+  {
+    "data": {
+      "text": "Atmospheric circulation changes in CMIP6 models under SSP3-7.0 show a poleward shift of the subtropical jet stream consistent with theory."
+    }
+  },
+  {
+    "data": {
+      "text": "We apply emergent constraints derived from CMIP5 models to constrain the CMIP6 ensemble projection of tropical precipitation change."
+    }
+  },
+  {
+    "data": {
+      "text": "SMHI-RCA4 is a regional climate model developed at the Swedish Meteorological and Hydrological Institute and widely used in CORDEX experiments."
+    }
+  },
+  {
+    "data": {
+      "text": "We drive SMHI-RCA4 with six CMIP6 models to quantify the uncertainty in projected temperature changes over Scandinavia."
+    }
+  },
+  {
+    "data": {
+      "text": "The REMO regional model is used in the CORDEX-Africa domain to downscale outputs from the MPI-ESM1-2-LR global model."
+    }
+  },
+  {
+    "data": {
+      "text": "CCLM is a non-hydrostatic regional climate model derived from the COSMO numerical weather prediction model."
+    }
+  },
+  {
+    "data": {
+      "text": "High-resolution simulations from HadGEM3-GC31-MM and EC-Earth3P-HR are part of the HighResMIP protocol targeting 25 km atmosphere grids."
+    }
+  },
+  {
+    "data": {
+      "text": "We use the Community Land Model CLM5 in offline mode driven by MERRA-2 atmospheric forcing to evaluate soil moisture trends."
+    }
+  },
+  {
+    "data": {
+      "text": "The 20CR reanalysis extends the observational record back to 1836 using surface pressure observations and an ensemble Kalman filter."
+    }
+  },
+  {
+    "data": {
+      "text": "CMIP6 models show large spread in tropical precipitation sensitivity that is partially attributed to differences in convective parameterisation."
+    }
+  },
+  {
+    "data": {
+      "text": "Attribution studies using CMIP6 detection-attribution simulations show that recent global warming is unequivocally due to human influence."
+    }
+  },
+  {
+    "data": {
+      "text": "The PRIMAVERA project produced a multi-model ensemble of high-resolution CMIP6-class simulations to study European climate extremes."
+    }
+  },
+  {
+    "data": {
+      "text": "PMIP4 coordinates paleo-climate simulations using the same Earth system models participating in CMIP6 under standardised boundary conditions."
+    }
+  },
+  {
+    "data": {
+      "text": "We use ScenarioMIP simulations from 18 CMIP6 models to calculate end-of-century heat stress indices under SSP1-2.6 and SSP5-8.5."
+    }
+  },
+  {
+    "data": {
+      "text": "CMIP6 models participating in HighResMIP show improved simulation of tropical cyclone tracks compared to standard-resolution CMIP6 models."
+    }
+  },
+  {
+    "data": {
+      "text": "The CMIP6 multi-model mean projects a 15–20% reduction in snow water equivalent over the European Alps under SSP5-8.5 by 2080."
+    }
+  }
+]

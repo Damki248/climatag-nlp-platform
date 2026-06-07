@@ -4,25 +4,25 @@ GLiNER fine-tuning – dodavanje Climate Model kategorije na GLiNER baseline.
 Koristi experience replay: SILVER dataset (stare kategorije) + Climate Model anotacije.
 Omjer: ~5:1 SILVER:Climate Model prema preporuci iz GLiNER GitHub issue #163.
 """
-
+ 
 import argparse
 import json
 import logging
 import os
 import random
 from pathlib import Path
-
+ 
 import pandas as pd
 import torch
 import mlflow
 from dotenv import load_dotenv
 from gliner import GLiNER
 from gliner.training import TrainingArguments
-
+ 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
-
+ 
 ALL_LABELS = [
     "Asset", "Body Part", "Body of Water", "Chemical", "Disease",
     "Ecosystem", "Energy Source", "Field of Study", "Geographical Feature",
@@ -33,7 +33,7 @@ ALL_LABELS = [
     "Policy", "Quantity", "Satellite", "System", "Time Period",
     "Climate Model",
 ]
-
+ 
 # IOB2 index -> label mapping iz SILVER dataseta
 IDX2LABEL = [
     "O", "B-Asset", "I-Asset", "B-Body Part", "I-Body Part",
@@ -53,8 +53,8 @@ IDX2LABEL = [
     "B-Quantity", "I-Quantity", "B-Satellite", "I-Satellite",
     "B-System", "I-System", "B-Time Period", "I-Time Period",
 ]
-
-
+ 
+ 
 def parse_args():
     p = argparse.ArgumentParser(description="GLiNER fine-tuning – Climate Model kategorija")
     p.add_argument("--silver_train",        default="data/raw/CliReNER_SILVER/train-00000-of-00001.parquet")
@@ -71,8 +71,8 @@ def parse_args():
     p.add_argument("--experiment",          default="climtag_ner_gliner")
     p.add_argument("--run_name",            default="gliner_climate_model_v1")
     return p.parse_args()
-
-
+ 
+ 
 def iob2_to_gliner(tokens: list, ner_tags: list) -> dict:
     """Konvertira IOB2 format (SILVER) u GLiNER format."""
     entities = []
@@ -90,8 +90,8 @@ def iob2_to_gliner(tokens: list, ner_tags: list) -> dict:
         else:
             i += 1
     return {"tokenized_text": tokens, "ner": entities}
-
-
+ 
+ 
 def parse_climate_model_annotations(path: str) -> list:
     """
     Parsira Label Studio export s Climate Model anotacijama.
@@ -99,7 +99,7 @@ def parse_climate_model_annotations(path: str) -> list:
     """
     with open(path) as f:
         data = json.load(f)
-
+ 
     samples = []
     skipped = 0
     for task in data:
@@ -108,12 +108,12 @@ def parse_climate_model_annotations(path: str) -> list:
         if not annotations:
             skipped += 1
             continue
-
+ 
         result = annotations[0].get("result", [])
         if not result:
             skipped += 1
             continue
-
+ 
         # Whitespace tokenizacija s pozicijama
         words = text.split()
         token_starts = []
@@ -124,7 +124,7 @@ def parse_climate_model_annotations(path: str) -> list:
             token_starts.append(idx)
             token_ends.append(idx + len(word))
             pos = idx + len(word)
-
+ 
         # Konverzija char spans -> token spans
         entities = []
         for r in result:
@@ -133,7 +133,7 @@ def parse_climate_model_annotations(path: str) -> list:
             e_start = r["value"]["start"]
             e_end   = r["value"]["end"]
             label   = r["value"]["labels"][0]
-
+ 
             tok_start = None
             tok_end   = None
             for j, (ts, te) in enumerate(zip(token_starts, token_ends)):
@@ -141,54 +141,91 @@ def parse_climate_model_annotations(path: str) -> list:
                     tok_start = j
                 if te <= e_end:
                     tok_end = j + 1
-
+ 
             if tok_start is not None and tok_end is not None:
                 entities.append((tok_start, tok_end, label))
-
+ 
         if entities:
             samples.append({"tokenized_text": words, "ner": entities})
         else:
             skipped += 1
-
+ 
     log.info("Parsirano %d Climate Model uzoraka, preskočeno %d", len(samples), skipped)
     return samples
-
-
+ 
+ 
+def tokens_to_char_spans(sample: dict) -> set:
+    """
+    Konvertira token-level span indekse iz sample["ner"] u character offsets.
+    GLiNER predict_entities vraća character offsete, pa moramo uskladiti format.
+    """
+    words = sample["tokenized_text"]
+    text  = " ".join(words)
+ 
+    # Izgradi mapping: token_i → char_start, char_end
+    char_starts, char_ends = [], []
+    pos = 0
+    for word in words:
+        idx = text.find(word, pos)
+        char_starts.append(idx)
+        char_ends.append(idx + len(word))
+        pos = idx + len(word)
+ 
+    spans = set()
+    for (tok_s, tok_e, lbl) in sample["ner"]:
+        if lbl == "Climate Model":
+            spans.add((char_starts[tok_s], char_ends[tok_e - 1]))
+    return spans
+ 
+ 
 def evaluate_climate_model(model: GLiNER, cm_samples: list, n: int = 50) -> dict:
     """
-    Evaluacija na Climate Model uzorcima.
-    Vraća precision, recall i F1 za Climate Model kategoriju.
+    Evaluacija na Climate Model uzorcima (held-out test set).
+ 
+    Koristi overlap-based matching jer annotatori nisu konzistentni u span
+    granicama (npr. 'CMIP6' vs 'CMIP6 models') — predikcija se računa kao
+    TP ako se preklapa s ground truth spanom i ima ispravnu labelu.
     """
     tp = fp = fn = 0
     eval_samples = cm_samples[:n]
-
+ 
     for sample in eval_samples:
-        text = " ".join(sample["tokenized_text"])
+        text  = " ".join(sample["tokenized_text"])
         preds = model.predict_entities(text, ALL_LABELS, threshold=0.5)
-
-        pred_spans = {
+ 
+        # Character offsets iz GLiNER
+        pred_spans = [
             (e["start"], e["end"]) for e in preds if e["label"] == "Climate Model"
-        }
-        true_spans = {
-            (e[0], e[1]) for e in sample["ner"] if e[2] == "Climate Model"
-        }
-
-        tp += len(pred_spans & true_spans)
-        fp += len(pred_spans - true_spans)
-        fn += len(true_spans - pred_spans)
-
+        ]
+        # Token indeksi → character offsets
+        true_spans = list(tokens_to_char_spans(sample))
+ 
+        # Overlap matching: predikcija je TP ako se preklapa s bilo kojim true spanom
+        matched_true = set()
+        matched_pred = set()
+        for i, p in enumerate(pred_spans):
+            for j, t in enumerate(true_spans):
+                if p[0] < t[1] and t[0] < p[1]:   # overlap uvjet
+                    matched_true.add(j)
+                    matched_pred.add(i)
+                    break  # svaka predikcija matchira najviše jedan true span
+ 
+        tp += len(matched_pred)
+        fp += len(pred_spans) - len(matched_pred)
+        fn += len(true_spans) - len(matched_true)
+ 
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall    = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     f1        = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
-
+ 
     return {"precision": round(precision, 4), "recall": round(recall, 4), "f1": round(f1, 4)}
-
-
+ 
+ 
 def main():
     args = parse_args()
     random.seed(args.seed)
     torch.manual_seed(args.seed)
-
+ 
     # 1. Učitaj SILVER dataset
     log.info("Učitavam SILVER dataset: %s", args.silver_train)
     df = pd.read_parquet(args.silver_train)
@@ -197,33 +234,40 @@ def main():
         for _, row in df.iterrows()
     ]
     log.info("SILVER uzoraka: %d", len(silver_samples))
-
+ 
     # 2. Učitaj Climate Model anotacije
     log.info("Učitavam Climate Model anotacije: %s", args.cm_annotations)
     cm_samples = parse_climate_model_annotations(args.cm_annotations)
-
+ 
     if not cm_samples:
         log.error("Nema Climate Model uzoraka. Provjeri %s", args.cm_annotations)
         return
-
-    # 3. Experience replay mix
-    n_silver = min(args.silver_ratio * len(cm_samples), len(silver_samples))
+ 
+    # 3. CM held-out test split (20%) — ovi uzorci NIKAD ne ulaze u trening
+    random.shuffle(cm_samples)
+    n_cm_test  = max(10, int(len(cm_samples) * 0.20))
+    cm_test    = cm_samples[:n_cm_test]
+    cm_train   = cm_samples[n_cm_test:]
+    log.info("Climate Model – train: %d, held-out test: %d", len(cm_train), len(cm_test))
+ 
+    # 4. Experience replay mix (samo cm_train, ne cm_test)
+    n_silver = min(args.silver_ratio * len(cm_train), len(silver_samples))
     random.shuffle(silver_samples)
-    mixed = silver_samples[:n_silver] + cm_samples
+    mixed = silver_samples[:n_silver] + cm_train
     random.shuffle(mixed)
-    log.info("Ukupno uzoraka: %d (SILVER: %d, Climate Model: %d)",
-             len(mixed), n_silver, len(cm_samples))
-
-    # 4. Train/val split
+    log.info("Ukupno uzoraka: %d (SILVER: %d, Climate Model train: %d)",
+             len(mixed), n_silver, len(cm_train))
+ 
+    # 5. Train/val split na mixed skupu
     n_val      = max(1, int(len(mixed) * args.val_split))
     val_data   = mixed[:n_val]
     train_data = mixed[n_val:]
     log.info("Train: %d, Val: %d", len(train_data), len(val_data))
-
+ 
     # 5. Učitaj model
     log.info("Učitavam GLiNER model: %s", args.base_model)
     model = GLiNER.from_pretrained(args.base_model)
-
+ 
     # 6. MLflow setup
     mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000"))
     try:
@@ -237,7 +281,7 @@ def main():
     except Exception as e:
         log.warning("MLflow experiment setup: %s", e)
     mlflow.set_experiment(args.experiment)
-
+ 
     with mlflow.start_run(run_name=args.run_name):
         mlflow.log_params({
             "base_model":    args.base_model,
@@ -247,10 +291,11 @@ def main():
             "silver_ratio":  args.silver_ratio,
             "train_size":    len(train_data),
             "val_size":      len(val_data),
-            "cm_samples":    len(cm_samples),
+            "cm_train":      len(cm_train),
+            "cm_test":       len(cm_test),
             "seed":          args.seed,
         })
-
+ 
         # 7. Fine-tuning
         log.info("Pokrećem fine-tuning (%d epoha)...", args.epochs)
         training_args = TrainingArguments(
@@ -266,34 +311,34 @@ def main():
             load_best_model_at_end=False,
             report_to="none",
         )
-
+ 
         model.train_model(
             train_dataset=train_data,
             eval_dataset=val_data,
             training_args=training_args,
             output_dir=args.output_model + "_checkpoints",
         )
-
+ 
         # 8. Spremi final model
         output_path = Path(args.output_model)
         output_path.mkdir(parents=True, exist_ok=True)
         model.save_pretrained(str(output_path))
         log.info("Model spremljen: %s", output_path)
-
-        # 9. Evaluacija Climate Model kategorije
-        log.info("Evaluacija Climate Model kategorije...")
-        eval_metrics = evaluate_climate_model(model, cm_samples)
-        log.info("Climate Model – Precision: %.4f, Recall: %.4f, F1: %.4f",
+ 
+        # 9. Evaluacija Climate Model kategorije — SAMO na held-out test skupu
+        log.info("Evaluacija Climate Model kategorije na %d held-out uzoraka...", len(cm_test))
+        eval_metrics = evaluate_climate_model(model, cm_test, n=len(cm_test))
+        log.info("Climate Model (held-out) – Precision: %.4f, Recall: %.4f, F1: %.4f",
                  eval_metrics["precision"], eval_metrics["recall"], eval_metrics["f1"])
-
+ 
         mlflow.log_metrics({
             "cm_precision": eval_metrics["precision"],
             "cm_recall":    eval_metrics["recall"],
             "cm_f1":        eval_metrics["f1"],
         })
-
+ 
     log.info("Fine-tuning završen.")
-
-
+ 
+ 
 if __name__ == "__main__":
     main()
