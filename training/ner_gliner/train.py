@@ -18,21 +18,11 @@ import mlflow
 from dotenv import load_dotenv
 from gliner import GLiNER
 from gliner.training import TrainingArguments
+from ner_labels import NER_LABELS
  
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
- 
-ALL_LABELS = [
-    "Asset", "Body Part", "Body of Water", "Chemical", "Disease",
-    "Ecosystem", "Energy Source", "Field of Study", "Geographical Feature",
-    "Intellectual Artefact", "Location", "Mathematical Expression",
-    "Measuring Device", "Meteorological Phenomenon", "Method",
-    "Natural Disaster", "Natural Phenomenon", "Organism", "Organization",
-    "Other", "Person", "Physical Artefact", "Physical Phenomenon",
-    "Policy", "Quantity", "Satellite", "System", "Time Period",
-    "Climate Model",
-]
  
 # IOB2 index -> label mapping from SILVER dataset
 IDX2LABEL = [
@@ -191,7 +181,7 @@ def evaluate_climate_model(model: GLiNER, cm_samples: list, n: int = 50) -> dict
  
     for sample in eval_samples:
         text  = " ".join(sample["tokenized_text"])
-        preds = model.predict_entities(text, ALL_LABELS, threshold=0.5)
+        preds = model.predict_entities(text, NER_LABELS, threshold=0.5)
  
         # Character offsets from GLiNER
         pred_spans = [

@@ -41,7 +41,7 @@ class NERService:
     def predict(self, text: str) -> List[Dict]:
         if self.model is None:
             raise RuntimeError("GLiNER model not loaded!")
-        entities = self.model.predict_entities(text, GLINER_LABELS)
+        entities = self.model.predict_entities(text, NER_LABELS)
         return [
             {
                 "span":  e["text"],

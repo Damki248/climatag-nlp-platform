@@ -322,22 +322,26 @@ def main():
             name="SciDCC-Classifier",
         )
 
-        # promote to production if this model is better than the current production mod3el
+        # promote to production if this model is better than the current production model
         client = mlflow.MlflowClient()
         # instead of transition_model_version_stage, use aliases
         try:
-            prod_version = client.get_model_version_by_alias("SciDCC-Classifier", "production")
-            prod_f1 = client.get_run(prod_version.run_id).data.metrics.get("test_macro_f1", 0)
-            if test_macro_f1 > prod_f1:
+            try:
+                prod_version = client.get_model_version_by_alias("SciDCC-Classifier", "production")
+                prod_f1 = client.get_run(prod_version.run_id).data.metrics.get("test_macro_f1", 0)
+            except Exception:
+                # no previous production model exists yet
+                prod_f1 = None
+
+            if prod_f1 is None:
+                client.set_registered_model_alias("SciDCC-Classifier", "production", registered.version)
+                log.info("Model registered as production (F1: %.4f)", test_macro_f1)
+            elif test_macro_f1 > prod_f1:
                 client.set_registered_model_alias("SciDCC-Classifier", "production", registered.version)
                 log.info("New model promoted to production (F1: %.4f > %.4f)", test_macro_f1, prod_f1)
             else:
                 client.set_registered_model_alias("SciDCC-Classifier", "staging", registered.version)
                 log.info("Model set to staging (F1: %.4f <= %.4f)", test_macro_f1, prod_f1)
-        except Exception as e:
-            # if there is no previous model, set as production
-            client.set_registered_model_alias("SciDCC-Classifier", "production", registered.version)
-            log.info("Model regostered as production (F1: %.4f)", test_macro_f1)
         except Exception as e:
             log.warning("MLflow registry promotion failed: %s", e)
             
