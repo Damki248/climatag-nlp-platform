@@ -14,7 +14,7 @@ class NERResponse(BaseModel):
     model: str
 
 class SwitchRequest(BaseModel):
-    model: str  # "baseline", "adapted" ili "gliner"
+    model: str  # "baseline" or "climate_model"
 
 
 @router.post("/predict", response_model=NERResponse)

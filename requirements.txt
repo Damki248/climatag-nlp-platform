@@ -1,0 +1,16 @@
+gliner
+transformers
+accelerate
+peft
+datasets
+evaluate
+scikit-learn
+numpy
+pandas
+pyarrow
+mlflow
+fastapi
+uvicorn[standard]
+python-dotenv
+requests
+huggingface_hub

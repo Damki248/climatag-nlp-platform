@@ -32,26 +32,26 @@ log = logging.getLogger(__name__)
 def parse_args():
     p = argparse.ArgumentParser(description="SciDCC classification fine-tuning")
     p.add_argument("--input",       default="title_summary", choices=["title_summary", "body"],
-                   help="Koji HF dataset koristimo (hf_title_summary ili hf_body)")
+                   help="Which HF dataset is used (hf_title_summary ili hf_body)")
     p.add_argument("--strategy",    default="full_ft",       choices=["full_ft", "lora"],
                    help="Strategija fine-tuninga")
     p.add_argument("--model",       default="P0L3/SciClimateBERT",
-                   help="HuggingFace model ID ili lokalni path")
+                   help="HuggingFace model ID or local path")
     p.add_argument("--lr",          default=5e-6,  type=float)
     p.add_argument("--epochs",      default=30,    type=int)
     p.add_argument("--batch",       default=8,     type=int)
     p.add_argument("--warmup",      default=0.2,   type=float)
     p.add_argument("--patience",    default=5,     type=int,
-                   help="Early stopping patience (epohe)")
+                   help="Early stopping patience (epochs)")
     p.add_argument("--weight_exp",  default=0.7,   type=float,
-                   help="Eksponent za class weight skaliranje (0.7=agresivno, 1.0=balanced)")
+                   help="Exponent for class weight scaling (0.7=aggressive, 1.0=balanced)")
     p.add_argument("--lora_r",      default=16,    type=int)
     p.add_argument("--lora_alpha",  default=32,    type=int)
     p.add_argument("--lora_dropout",default=0.1,   type=float)
     p.add_argument("--experiment",  default="scidcc_classification",
                    help="MLflow experiment name")
     p.add_argument("--run_name",    default=None,
-                   help="MLflow run name (auto ako nije zadano)")
+                   help="MLflow run name (auto on default)")
     p.add_argument("--seed",        default=42,    type=int)
     p.add_argument("--processed_dir", default="data/processed")
     p.add_argument("--models_dir",    default="models")

@@ -73,7 +73,7 @@ function RunRow({ run, bestF1, onClick, isSelected }) {
       <td className="px-4 py-3">
         <p className="text-sm font-medium text-gray-900">{name}</p>
         <p className="text-xs text-gray-400 mt-0.5">
-          {p.base_model?.split('/').pop() ?? '—'} · {p.epochs ?? '—'} epoha
+          {p.base_model?.split('/').pop() ?? '—'} · {p.epochs ?? '—'} epochs
         </p>
       </td>
       <td className="px-4 py-3"><StatusBadge status={status} /></td>

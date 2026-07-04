@@ -11,6 +11,8 @@ const LABEL_COLORS = {
   'Geographical Feature':      { bg: 'bg-violet-100',  text: 'text-violet-800',  border: 'border-violet-300' },
   'Intellectual Artefact':     { bg: 'bg-cyan-100',    text: 'text-cyan-800',    border: 'border-cyan-300' },
   'Location':                  { bg: 'bg-cyan-100',    text: 'text-cyan-800',    border: 'border-cyan-300' },
+  'Mathematical Expression':   { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800', border: 'border-fuchsia-300' },
+  'Measuring Device':          { bg: 'bg-lime-100',    text: 'text-lime-800',    border: 'border-lime-300' },
   'Meteorological Phenomenon': { bg: 'bg-sky-100',     text: 'text-sky-800',     border: 'border-sky-300' },
   'Method':                    { bg: 'bg-amber-100',   text: 'text-amber-800',   border: 'border-amber-300' },
   'Natural Disaster':          { bg: 'bg-red-200',     text: 'text-red-900',     border: 'border-red-400' },

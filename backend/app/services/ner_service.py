@@ -2,19 +2,10 @@ from gliner import GLiNER
 from typing import List, Dict
 from pathlib import Path
 import torch
+from ner_labels import NER_LABELS
 
 GLINER_MODEL_PATH    = "models/ner_gliner_climate_model"
 GLINER_BASELINE_PATH = "models/ner_gliner_baseline"
-
-GLINER_LABELS = [
-    "Asset", "Body Part", "Body of Water", "Chemical", "Disease",
-    "Ecosystem", "Energy Source", "Field of Study", "Geographical Feature",
-    "Intellectual Artefact", "Location", "Meteorological Phenomenon", "Method",
-    "Natural Disaster", "Natural Phenomenon", "Organism", "Organization",
-    "Other", "Person", "Physical Artefact", "Physical Phenomenon",
-    "Policy", "Quantity", "Satellite", "System", "Time Period", "Climate Model",
-]
-
 
 class NERService:
     def __init__(self):
@@ -22,7 +13,7 @@ class NERService:
         self.active_model = None  # "baseline" or "climate_model"
 
     def load(self):
-        """Učitava fine-tuned Climate Model model ako postoji, inače baseline."""
+        """Loads the fine-tuned model if exists, otherwise the baseline."""
         if Path(GLINER_MODEL_PATH).exists():
             self._load_model(GLINER_MODEL_PATH, "climate_model")
         else:

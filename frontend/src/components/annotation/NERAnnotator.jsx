@@ -1,43 +1,36 @@
 import { useState, useRef, useCallback } from 'react'
-
-const LABELS = [
-  'Asset', 'Body of Water', 'Body Part', 'Chemical', 'Climate Model', 'Date', 'Device',
-  'Disease', 'Ecosystem', 'Event', 'Geographical Feature', 'Location',
-  'Measuring Device', 'Meteorological Phenomenon', 'Money', 'Natural Disaster',
-  'Natural Phenomenon', 'Numerical Value', 'Organism', 'Organization', 'Person',
-  'Policy', 'Quantity', 'Research', 'Sensor', 'Species', 'Technology', 'Time', 'URL'
-]
+import { NER_LABELS as LABELS } from '../../constants/nerLabels'
 
 const LABEL_COLORS = {
   'Asset': 'bg-red-100 text-red-800 border-red-300',
-  'Body of Water': 'bg-blue-100 text-blue-800 border-blue-300',
   'Body Part': 'bg-orange-100 text-orange-800 border-orange-300',
+  'Body of Water': 'bg-blue-100 text-blue-800 border-blue-300',
   'Chemical': 'bg-purple-100 text-purple-800 border-purple-300',
-  'Climate Model': 'bg-emerald-100 text-emerald-800 border-emerald-400',
-  'Date': 'bg-teal-100 text-teal-800 border-teal-300',
-  'Device': 'bg-yellow-100 text-yellow-800 border-yellow-300',
   'Disease': 'bg-red-200 text-red-900 border-red-400',
   'Ecosystem': 'bg-green-100 text-green-800 border-green-300',
-  'Event': 'bg-indigo-100 text-indigo-800 border-indigo-300',
+  'Energy Source': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  'Field of Study': 'bg-indigo-100 text-indigo-800 border-indigo-300',
   'Geographical Feature': 'bg-violet-100 text-violet-800 border-violet-300',
+  'Intellectual Artefact': 'bg-cyan-100 text-cyan-800 border-cyan-300',
   'Location': 'bg-cyan-100 text-cyan-800 border-cyan-300',
-  'Measuring Device': 'bg-amber-100 text-amber-800 border-amber-300',
+  'Mathematical Expression': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
+  'Measuring Device': 'bg-lime-100 text-lime-800 border-lime-300',
   'Meteorological Phenomenon': 'bg-sky-100 text-sky-800 border-sky-300',
-  'Money': 'bg-yellow-100 text-yellow-900 border-yellow-400',
+  'Method': 'bg-amber-100 text-amber-800 border-amber-300',
   'Natural Disaster': 'bg-red-200 text-red-900 border-red-400',
   'Natural Phenomenon': 'bg-teal-100 text-teal-900 border-teal-400',
-  'Numerical Value': 'bg-gray-100 text-gray-700 border-gray-300',
   'Organism': 'bg-green-100 text-green-900 border-green-400',
   'Organization': 'bg-blue-100 text-blue-900 border-blue-400',
+  'Other': 'bg-gray-100 text-gray-600 border-gray-300',
   'Person': 'bg-violet-100 text-violet-900 border-violet-400',
+  'Physical Artefact': 'bg-orange-100 text-orange-900 border-orange-400',
+  'Physical Phenomenon': 'bg-teal-100 text-teal-800 border-teal-300',
   'Policy': 'bg-orange-100 text-orange-900 border-orange-400',
   'Quantity': 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  'Research': 'bg-cyan-100 text-cyan-900 border-cyan-400',
-  'Sensor': 'bg-red-100 text-red-800 border-red-300',
-  'Species': 'bg-blue-100 text-blue-800 border-blue-300',
-  'Technology': 'bg-purple-100 text-purple-900 border-purple-400',
-  'Time': 'bg-orange-100 text-orange-800 border-orange-300',
-  'URL': 'bg-gray-100 text-gray-600 border-gray-300',
+  'Satellite': 'bg-gray-100 text-gray-700 border-gray-300',
+  'System': 'bg-blue-100 text-blue-800 border-blue-300',
+  'Time Period': 'bg-orange-100 text-orange-800 border-orange-300',
+  'Climate Model': 'bg-emerald-100 text-emerald-800 border-emerald-400',
 }
 
 const DEFAULT_COLOR = 'bg-gray-100 text-gray-700 border-gray-300'
@@ -225,14 +218,14 @@ export default function NERAnnotator({ text, initialEntities = [], onSave }) {
           >
             <div className="flex items-center justify-between mb-2 px-1">
               <span className="text-xs font-medium text-gray-700 truncate max-w-40">
-                {menu.type === 'edit' ? `"${menu.span}"` : `Dodaj: "${menu.span}"`}
+                {menu.type === 'edit' ? `"${menu.span}"` : `Add: "${menu.span}"`}
               </span>
               {menu.type === 'edit' && (
                 <button
                   onClick={deleteEntity}
                   className="text-xs text-red-600 hover:text-red-800 font-medium ml-2 shrink-0"
                 >
-                  Obriši
+                  Delete
                 </button>
               )}
             </div>
