@@ -3,9 +3,12 @@ from typing import List, Dict
 from pathlib import Path
 import torch
 from ner_labels import NER_LABELS
+import logging
 
 GLINER_MODEL_PATH    = "models/ner_gliner_climate_model"
 GLINER_BASELINE_PATH = "models/ner_gliner_baseline"
+
+log = logging.getLogger(__name__)
 
 class NERService:
     def __init__(self):
@@ -20,12 +23,12 @@ class NERService:
             self._load_model(GLINER_BASELINE_PATH, "baseline")
 
     def _load_model(self, path: str, name: str):
-        print(f"Loading GLiNER model from {path}...")
+        log.info("Loading GLiNER model from %s...", path)
         self.model = GLiNER.from_pretrained(path)
         if torch.cuda.is_available():
             self.model = self.model.to("cuda")
         self.active_model = name
-        print(f"GLiNER model ready! (active: {name})")
+        log.info("GLiNER model ready! (active: %s)", name)
 
     def switch_model(self, model_name: str):
         """Switch between baseline and climate_model."""

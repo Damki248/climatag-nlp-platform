@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -58,6 +58,11 @@ if DIST_DIR.exists():
     def serve_frontend(full_path: str):
         # API route is skipped in production
         if full_path.startswith("api/"):
-            return {"detail": "Not found"}
-        index = DIST_DIR / "index.html"
-        return FileResponse(str(index))
+            raise HTTPException(status_code=404, detail="Not found")
+        
+        if full_path:
+            candidate = (DIST_DIR / full_path).resolve()
+            if candidate.is_file() and DIST_DIR.resolve() in candidate.parents:
+                return FileResponse(str(candidate))
+
+        return FileResponse(str(DIST_DIR / "index.html"))
