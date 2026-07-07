@@ -48,7 +48,7 @@ def _write_status(data: dict):
 def _read_status() -> dict:
     if not STATUS_FILE.exists():
         return {"status": "idle", "logs": []}
-    status = json.loadS(STATUS_FILE.read_text())
+    status = json.loads(STATUS_FILE.read_text())
     
     if status.get("status") == "running" and status.get("pid"):
         try:
@@ -61,9 +61,8 @@ def _read_status() -> dict:
     return status
 
 
-def _run_training(request: TrainRequest):
+def _run_training(request: TrainRequest, run_name: str):
     """Starts the training as a subprocess and tracks the output."""
-    run_name = request.run_name or f"gliner_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     _write_status({
         "status": "running",

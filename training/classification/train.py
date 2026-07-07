@@ -20,6 +20,7 @@ from transformers import (
     EarlyStoppingCallback,
     Trainer,
     TrainingArguments,
+    set_seed,
 )
 
 load_dotenv()
@@ -115,7 +116,7 @@ class WeightedTrainer(Trainer):
 
 def main():
     args = parse_args()
-    set.seed(args.seed)
+    set_seed(args.seed)
 
     PROCESSED_DIR = Path(args.processed_dir)
     MODELS_DIR    = Path(args.models_dir)

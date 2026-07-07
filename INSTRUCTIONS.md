@@ -1,133 +1,159 @@
-# ClimaTag – Upute za pokretanje
+# ClimaTag – Running Instructions
 
-> Magistarski rad – Damjan  
-> Fakultet informatike i digitalnih tehnologija, Rijeka  
-> Mentorica: Prof. dr. sc. Sanda Martinčić-Ipšić
+> Master's thesis – Damjan
+> Faculty of Informatics and Digital Technologies, University of Rijeka
+> Supervisor: Prof. dr. sc. Sanda Martinčić-Ipšić
+
+These instructions apply to the **already configured machine** (WSL2 Ubuntu, repository
+in `~/climate-nlp-platform`, conda env `climtag-env`). For setting up from scratch,
+see [SETUP.md](SETUP.md).
 
 ---
 
-## Brzo pokretanje
+## Quick start
+
+The backend (which also serves the frontend) runs as a **systemd service** and starts
+automatically. To start/check manually:
 
 ```bash
-# 1. Aktiviraj environment
-conda activate climtag-env
-
-# 2. Pokreni Docker servise (Label Studio + MLflow)
+# 1. Docker services (Label Studio + MLflow) — if not already running
 cd ~/climate-nlp-platform
 docker compose -f docker/docker-compose.yml up -d
 
-# 3. Pokreni backend (servira i frontend i API)
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+# 2. Backend service — check / start
+sudo systemctl status climatag
+sudo systemctl start climatag      # if not running
 ```
 
-Otvori **http://localhost:8000** – ClimaTag UI.
+Open **http://localhost:8000** – the ClimaTag UI.
+
+> If the Docker daemon is not running: `sudo systemctl start docker`
+> (this machine uses the native Docker Engine inside Ubuntu, not Docker Desktop).
 
 ---
 
-## Servisni način rada (automatski start)
-
-Backend je konfiguriran kao systemd servis i automatski se pokreće pri startu sustava:
+## Service mode
 
 ```bash
 # Status
 sudo systemctl status climatag
 
-# Restart (npr. nakon retraininga)
+# Restart — required after: retraining (to load the new model)
+# or rebuilding the frontend (npm run build)
 sudo systemctl restart climatag
 
-# Logovi
-sudo journalctl -u climatag -n 50 --no-pager
-```
-
-Docker servise (Label Studio, MLflow) treba pokrenuti ručno ako nisu već pokrenuti:
-```bash
-cd ~/climate-nlp-platform
-docker compose -f docker/docker-compose.yml up -d
+# Logs
+journalctl -u climatag -n 50 --no-pager    # last 50 lines
+journalctl -u climatag -f                   # follow live
 ```
 
 ---
 
-## URL-ovi
+## URLs
 
-| Servis | URL |
-|--------|-----|
-| ClimaTag aplikacija | http://localhost:8000 |
-| FastAPI dokumentacija | http://localhost:8000/docs |
+| Service | URL |
+|---------|-----|
+| ClimaTag application | http://localhost:8000 |
+| FastAPI documentation | http://localhost:8000/docs |
 | Label Studio | http://localhost:8080 |
 | MLflow | http://localhost:5000 |
 
 ---
 
-## Stranice aplikacije
+## Application pages
 
-| Stranica | Opis |
-|----------|------|
-| **NER** | Named Entity Recognition – unesi tekst, odaberi model (Baseline ili Climate Model), analiziraj entitete |
-| **Annotate** | Human-in-the-loop anotacija – model pre-anotira tekst, ti ispravljaš, šalje se u Label Studio |
-| **Train** | Fine-tuning GLiNER modela na novim anotacijama iz Label Studija |
-| **Experiments** | Pregled MLflow eksperimenata i metrika treninga |
-
----
-
-## NER modeli
-
-| Model | Opis |
-|-------|------|
-| **Baseline** | GLiNER medium-v2.1 – pretreniran na općim NER datasetima, prepoznaje 28 klimatskih kategorija entiteta |
-| **Climate Model** | Fine-tuned na Climate Model anotacijama (CMIP6, ERA5, SSP scenariji...) – dodaje kategoriju Climate Model uz 28 postojećih |
+| Page | Description |
+|------|-------------|
+| **NER** | Named Entity Recognition – enter text, pick a model (Baseline or Climate Model), analyse entities |
+| **Annotate** | Human-in-the-loop annotation – the model pre-annotates text, the user corrects it, corrections are pushed to Label Studio |
+| **Train** | Fine-tuning of the GLiNER model on new annotations, with live progress tracking |
+| **Experiments** | Overview of MLflow experiments and training metrics |
+| **Classify** | Classification of scientific text into 20 SciDCC categories (SciClimateBERT) |
 
 ---
 
-## Dodavanje novih anotacija i retraining
+## NER models
 
-1. Idi na **Annotate** stranicu, unesi tekst, ispravi anotacije, klikni Save
-2. Idi na **Train** stranicu, podesi parametre, klikni **Start training**
-3. Prati napredak u log panelu
-4. Nakon završetka: `sudo systemctl restart climatag`
+| Model | Description |
+|-------|-------------|
+| **Baseline** | GLiNER medium-v2.1 – recognises the 28 climate entity categories (CliReNER set) |
+| **Climate Model** | Fine-tuned via experience replay – adds the Climate Model category (CMIP6, ERA5, RCP/SSP scenarios...) on top of the existing 28 |
+
+Climate Model results on the held-out test set:
+**Precision 0.9744 · Recall 0.6129 · F1 0.7525**
+(one-to-one overlap matching; methodology details in [TRAINING.md](TRAINING.md))
+
+---
+
+## Adding new annotations & retraining
+
+1. **Annotate** page → enter text → correct the pre-annotations → Save
+2. **Train** page → configure parameters → **Start training**
+   (parameters are validated; a second concurrent run is rejected with 409)
+3. Follow progress in the log panel
+4. When finished: `sudo systemctl restart climatag` (loads the new model)
+
+Run results are visible on the **Experiments** page and in MLflow.
 
 ---
 
 ## Conda environment
 
 ```bash
-# Aktivacija
 conda activate climtag-env
 
-# Provjera GPU-a
+# GPU check
 python -c "import torch; print(torch.cuda.is_available())"
+
+# Tests (span conversion — regression suite)
+python -m pytest tests/ -v
 ```
 
-### Ključni paketi
+### Key packages
 
-| Paket | Verzija |
-|-------|---------|
+| Package | Version |
+|---------|---------|
 | Python | 3.10 |
 | torch | 2.5.1+cu121 |
 | gliner | latest |
-| fastapi | 0.135.3 |
-| mlflow | 3.11.1 |
+| fastapi | 0.135.x |
+| mlflow | 3.11.x |
 
 ---
 
-## Poznati problemi
+## Known issues
 
 **Docker permission denied**
 ```bash
 sudo usermod -aG docker $USER
-newgrp docker
+# close and reopen the terminal
 ```
 
-**Backend ne vidi module 'backend'**
-Pokreni uvicorn iz root direktorija projekta (`~/climate-nlp-platform`), ne iz poddirektorija.
+**Service "running" but the UI is unreachable**
+1. `curl http://127.0.0.1:8000/health` — if it fails, check `journalctl -u climatag -n 50`
+2. `ls frontend/dist/index.html` — if missing: `cd frontend && npm run build`,
+   then **restart the service** (the static mount registers at startup)
 
-**GLiNER spor bez GPU-a**
-Normalno – CPU inference je 10-20x sporiji. Provjeri `nvidia-smi` i CUDA instalaciju.
+**Training failed (status "failed")**
+The subprocess traceback is in the log panel / `/api/train/status`. After fixing the
+cause: Reset on the Train page (or `POST /api/train/reset`) and start again — no
+backend restart needed, each training run is a fresh subprocess.
+
+**Backend can't find module 'backend'**
+Run uvicorn/training from the project root (`~/climate-nlp-platform`), not from a
+subdirectory. For the service: `WorkingDirectory` in the unit file must be the repo root.
+
+**GLiNER slow without a GPU**
+Normal – CPU inference is 10–20× slower. Check `nvidia-smi`.
 
 **MLflow artifact PermissionError**
 ```bash
 chmod 777 ~/climate-nlp-platform/docker/mlflow-artifacts
 ```
 
+**WSL specifics** (default distro, interop, Vmmem, volume prefixes...)
+See the Troubleshooting section in [SETUP.md](SETUP.md) — it covers all known WSL2 pitfalls.
+
 ---
 
-*Zadnje ažuriranje: svibanj 2026.*
+*Last updated: July 2026*

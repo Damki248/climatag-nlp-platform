@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from gliner import GLiNER
 from gliner.training import TrainingArguments
 from ner_labels import NER_LABELS
+from transformers import set_seed
  
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -214,7 +215,7 @@ def evaluate_climate_model(model: GLiNER, cm_samples: list, n: int = 50) -> dict
  
 def main():
     args = parse_args()
-    set.seed(args.seed)
+    set_seed(args.seed)
  
     # 1. Load SILVER dataset
     log.info("Loading SILVER dataset: %s", args.silver_train)
