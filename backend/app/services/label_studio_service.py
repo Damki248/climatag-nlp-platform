@@ -42,6 +42,9 @@ def upload_preannotated(texts: List[str], ner_service, annotations: List[List[Di
     If there are None annotations, use NER model for pre-annotation.
     If annotations are passed, use them directly (human-corrected).
     """
+    if not LS_TOKEN:
+        raise RuntimeError("LABEL_STUDIO_TOKEN is not set, add it to .env")
+
     tasks = []
     for i, text in enumerate(texts):
         is_human = annotations and i < len(annotations) and annotations[i]
@@ -86,7 +89,7 @@ def upload_preannotated(texts: List[str], ner_service, annotations: List[List[Di
         tasks.append(task)
 
     url = f"{LS_URL}/api/projects/{LS_PROJECT}/import"
-    response = requests.post(url, headers=HEADERS, json=tasks)
+    response = requests.post(url, headers=HEADERS, json=tasks, timeout=(5, 60))
     response.raise_for_status()
 
     result = response.json()
@@ -99,9 +102,12 @@ def upload_preannotated(texts: List[str], ner_service, annotations: List[List[Di
 
 def export_annotations(status: str = "completed") -> List[Dict]:
     """Export annotations from Label Studio project."""
+    if not LS_TOKEN:
+        raise RuntimeError("LABEL_STUDIO_TOKEN is not set, add it to .env")
+    
     url = f"{LS_URL}/api/projects/{LS_PROJECT}/export"
     params = {"exportType": "JSON"}
-    response = requests.get(url, headers=HEADERS, params=params)
+    response = requests.get(url, headers=HEADERS, params=params, timeout=(5, 60))
     response.raise_for_status()
 
     tasks = response.json()

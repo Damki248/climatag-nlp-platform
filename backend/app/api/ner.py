@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from backend.app.services.ner_service import ner_service
 
 router = APIRouter(prefix="/api/ner", tags=["NER"])
 
 
 class NERRequest(BaseModel):
-    text: str
+    text: str = Field(..., max_length=50_000)
 
 class NERResponse(BaseModel):
     entities: list

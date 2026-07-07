@@ -3,10 +3,10 @@
 import argparse
 import json
 import logging
-import os
 from pathlib import Path
 import re
-
+import os
+from dotenv import load_dotenv
 import evaluate
 import mlflow
 import numpy as np
@@ -21,6 +21,8 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -113,7 +115,7 @@ class WeightedTrainer(Trainer):
 
 def main():
     args = parse_args()
-    torch.manual_seed(args.seed)
+    set.seed(args.seed)
 
     PROCESSED_DIR = Path(args.processed_dir)
     MODELS_DIR    = Path(args.models_dir)
@@ -143,7 +145,7 @@ def main():
     output_dir = MODELS_DIR / f"cls_{run_label}"
 
     # MLflow setup
-    mlflow.set_tracking_uri("http://localhost:5000")
+    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000"))
     
     # Create an experiment with HTTP artifact location (ensures no permission error)
     client_setup = mlflow.MlflowClient()

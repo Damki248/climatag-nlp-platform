@@ -7,9 +7,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+import threading
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+_start_lock = threading.Lock()
 
 router = APIRouter(prefix="/api/train", tags=["Training"])
 
@@ -18,11 +21,11 @@ STATUS_FILE = Path("training_status.json")
 
 
 class TrainRequest(BaseModel):
-    epochs:       int   = 10
-    lr:           float = 5e-6
-    batch:        int   = 8
-    silver_ratio: int   = 5
-    run_name:     Optional[str] = None
+    epochs:       int   = Field(10, ge=1, le=50)
+    lr:           float = Field(5e-6, gt=0, le=1e-2)
+    batch:        int   = Field(8, ge=1, le=64)
+    silver_ratio: int   = Field(5, ge=1, le=20)
+    run_name:     Optional[str] = Field(None, max_length=100, pattern=r"^[\w\-.]+$")
 
 
 class TrainStatus(BaseModel):
@@ -37,13 +40,25 @@ class TrainStatus(BaseModel):
 
 
 def _write_status(data: dict):
-    STATUS_FILE.write_text(json.dumps(data))
+    tmp = STATUS_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data))
+    os.replace(tmp, STATUS_FILE)
 
 
 def _read_status() -> dict:
     if not STATUS_FILE.exists():
         return {"status": "idle", "logs": []}
-    return json.loads(STATUS_FILE.read_text())
+    status = json.loadS(STATUS_FILE.read_text())
+    
+    if status.get("status") == "running" and status.get("pid"):
+        try:
+            os.kill(status["pid"], 0)
+        except:
+            status["staus"] = "failed"
+            status["finished_at"] = datetime.now().isoformat()
+            status["error"] = "Training process died unexpectedly (backend restart?)"
+            _write_status(status)
+    return status
 
 
 def _run_training(request: TrainRequest):
@@ -83,6 +98,10 @@ def _run_training(request: TrainRequest):
             bufsize=1,
         )
 
+        status = _read_status()
+        status["pid"] = proc.pid
+        _write_status(status)
+
         logs = [f"Starting training run: {run_name}"]
         current_epoch = 0
 
@@ -116,6 +135,7 @@ def _run_training(request: TrainRequest):
                 "total_epochs": request.epochs,
                 "logs": logs,
                 "error": None,
+                "pid": proc.pid,
             })
 
         proc.wait()
@@ -159,12 +179,14 @@ def _run_training(request: TrainRequest):
 
 @router.post("/start")
 def start_training(request: TrainRequest, background_tasks: BackgroundTasks):
-    status = _read_status()
-    if status.get("status") == "running":
-        raise HTTPException(status_code=409, detail="Training already in progress")
-
-    background_tasks.add_task(_run_training, request)
-    return {"message": "Training started", "run_name": request.run_name}
+    with _start_lock:
+        if _read_status().get("status") == "running":
+            raise HTTPException(status_code=409, detail="Training already in progress")
+        run_name = request.run_name or f"gliner_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        _write_status({"status": "running", "run_name": run_name, "logs": ["Queued..."],
+                       "started_at": datetime.now().isoformat()})
+        background_tasks.add_task(_run_training, request, run_name)
+        return {"message": "Training started", "run_name": run_name}
 
 
 @router.get("/status", response_model=TrainStatus)

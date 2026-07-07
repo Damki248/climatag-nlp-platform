@@ -121,19 +121,19 @@ def parse_climate_model_annotations(path: str) -> list:
             if not r.get("value", {}).get("labels"):
                 continue
             e_start = r["value"]["start"]
-            e_end   = r["value"]["end"]
-            label   = r["value"]["labels"][0]
+            e_end = r["value"]["end"]
+            label = r["value"]["labels"][0]
  
-            tok_start = None
-            tok_end   = None
-            for j, (ts, te) in enumerate(zip(token_starts, token_ends)):
-                if ts >= e_start and tok_start is None:
-                    tok_start = j
-                if te <= e_end:
-                    tok_end = j + 1
+            tok_start = next ((j for j, te in enumerate(token_ends) if te > e_start), None)
+            overlapping = [j for j, ts in enumerate(token_starts) if ts < e_end]
+            tok_end = overlapping[-1] + 1 if overlapping else None
  
-            if tok_start is not None and tok_end is not None:
-                entities.append((tok_start, tok_end, label))
+            if tok_start is None and tok_end is None or tok_start >= tok_end:
+                log.warning("Skipping misaligned span %r (chars %d-%d)",
+                            text[e_start:e_end], e_start, e_end)
+                continue
+
+            entities.append((tok_start, tok_end, label))
  
         if entities:
             samples.append({"tokenized_text": words, "ner": entities})
@@ -195,6 +195,8 @@ def evaluate_climate_model(model: GLiNER, cm_samples: list, n: int = 50) -> dict
         matched_pred = set()
         for i, p in enumerate(pred_spans):
             for j, t in enumerate(true_spans):
+                if j in matched_true:
+                    continue
                 if p[0] < t[1] and t[0] < p[1]:   # overlap condition
                     matched_true.add(j)
                     matched_pred.add(i)
@@ -212,8 +214,7 @@ def evaluate_climate_model(model: GLiNER, cm_samples: list, n: int = 50) -> dict
  
 def main():
     args = parse_args()
-    random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    set.seed(args.seed)
  
     # 1. Load SILVER dataset
     log.info("Loading SILVER dataset: %s", args.silver_train)
@@ -297,7 +298,10 @@ def main():
             weight_decay=0.01,
             eval_strategy="epoch",
             save_strategy="epoch",
-            load_best_model_at_end=False,
+            load_best_model_at_end=True,
+            metric_for_best_model="eval_loss",
+            greater_is_better=False,
+            save_total_limit=2,
             report_to="none",
         )
  

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from backend.app.services.cls_service import cls_service
 
 router = APIRouter(prefix="/api/cls", tags=["Classification"])
 
 
 class CLSRequest(BaseModel):
-    text: str
+    text: str = Field(..., max_length=50_000)
     top_k: int = 3
 
 

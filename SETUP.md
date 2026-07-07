@@ -80,8 +80,9 @@ conda init bash && source ~/.bashrc
 ### Create environment
 
 ```bash
-conda create -n climtag-env python=3.10 -y
-conda activate climtag-env
+conda create -n climatag-env python=3.10 -y
+# You will be asked to accept the Terms of service first, so execute commands provided in the output, then re-run the command above
+conda activate climatag-env
 ```
 
 ### Install dependencies
@@ -138,13 +139,13 @@ mkdir -p models
 
 # 1. Fine-tuned GLiNER Climate Model
 #    Replace FILE_ID_GLINER with the id from its share link
-gdown --fuzzy "https://drive.google.com/file/d/FILE_ID_GLINER/view" -O gliner_climate_model.zip
+gdown "https://drive.google.com/file/d/FILE_ID_GLINER/view" -O gliner_climate_model.zip
 unzip gliner_climate_model.zip -d models/
 rm gliner_climate_model.zip
 
 # 2. Classification model (SciClimateBERT)
 #    Replace FILE_ID_CLS with the id from its share link
-gdown --fuzzy "https://drive.google.com/file/d/FILE_ID_CLS/view" -O cls_model.zip
+gdown "https://drive.google.com/file/d/FILE_ID_CLS/view" -O cls_model.zip
 unzip cls_model.zip -d models/
 rm cls_model.zip
 ```
@@ -279,6 +280,8 @@ GLiNER model ready! (active: baseline)
 ```
 
 ### Run as a system service (optional, for production)
+
+Before executing these commands, open the `climatag.service` file and chage every `<your_username>` placeholder with the system user.
 
 ```bash
 sudo cp climatag.service /etc/systemd/system/

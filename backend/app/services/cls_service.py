@@ -2,33 +2,11 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from pathlib import Path
 import torch
 import logging
+import os
 
 log = logging.getLogger(__name__)
 
-CLS_MODEL_PATH = "models/cls_full_ft_body_lr2e5_batch16_exp07/checkpoint-11110"
-
-ID2LABEL = {
-    0: "Agriculture & Food",
-    1: "Animals",
-    2: "Biology",
-    3: "Biotechnology",
-    4: "Climate",
-    5: "Earthquakes",
-    6: "Endangered Animals",
-    7: "Environment",
-    8: "Extinction",
-    9: "Genetically Modified",
-    10: "Geography",
-    11: "Geology",
-    12: "Global Warming",
-    13: "Hurricanes Cyclones",
-    14: "Microbes",
-    15: "New Species",
-    16: "Ozone Holes",
-    17: "Pollution",
-    18: "Weather",
-    19: "Zoology",
-}
+CLS_MODEL_PATH = os.getenv("CLS_MODEL_PATH", "models/cls_full_ft_body_lr2e5_batch16_exp07/checkpoint-11110")
 
 
 class CLSService:
@@ -63,7 +41,7 @@ class CLSService:
             logits = self.model(**inputs).logits
         probs = torch.softmax(logits, dim=-1).squeeze().cpu().tolist()
         ranked = sorted(
-            [{"label": ID2LABEL[i], "score": round(p, 4)} for i, p in enumerate(probs)],
+            [{"label": self.model.config.id2label[i], "score": round(p, 4)} for i, p in enumerate(probs)],
             key=lambda x: x["score"],
             reverse=True,
         )
