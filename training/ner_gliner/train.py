@@ -88,7 +88,7 @@ def parse_climate_model_annotations(path: str) -> list:
     Parses Label Studio export with Climate Model annotations.
     Converts char spans -> token spans into GLiNER format.
     """
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
  
     samples = []

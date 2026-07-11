@@ -41,14 +41,14 @@ class TrainStatus(BaseModel):
 
 def _write_status(data: dict):
     tmp = STATUS_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data))
+    tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     os.replace(tmp, STATUS_FILE)
 
 
 def _read_status() -> dict:
     if not STATUS_FILE.exists():
         return {"status": "idle", "logs": []}
-    status = json.loads(STATUS_FILE.read_text())
+    status = json.loads(STATUS_FILE.read_text(encoding="utf-8"))
     
     if status.get("status") == "running" and status.get("pid"):
         try:

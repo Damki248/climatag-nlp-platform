@@ -123,7 +123,7 @@ def main():
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
     # label mapping
-    with open(PROCESSED_DIR / "label_map.json") as f:
+    with open(PROCESSED_DIR / "label_map.json", encoding="utf-8") as f:
         label_map = json.load(f)
     label2id = label_map["label2id"]
     id2label = {int(k): v for k, v in label_map["id2label"].items()}
@@ -283,7 +283,7 @@ def main():
         # save per-class JSON as artifact
         pc_path = output_dir / "per_class_f1.json"
         output_dir.mkdir(parents=True, exist_ok=True)
-        with open(pc_path, "w") as f:
+        with open(pc_path, "w", encoding="utf-8") as f:
             json.dump(per_class_dict, f, indent=2)
 
         # save model
@@ -302,7 +302,7 @@ def main():
             "lr":               args.lr,
             "weight_exp":       args.weight_exp,
         }
-        with open(best_path / "test_results.json", "w") as f:
+        with open(best_path / "test_results.json", "w", encoding="utf-8") as f:
             json.dump(result_summary, f, indent=2)
 
         log.info("Test macro F1: %.4f", test_results["eval_macro_f1"])

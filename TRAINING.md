@@ -45,7 +45,7 @@ constraint keeps precision honest.
 ### Current production model
 
 The shipped model (`models/ner_gliner_climate_model`) was fine-tuned with
-~290 Climate Model annotations, silver_ratio 5:1, 10 epochs, LR 5e-6, batch 8.
+~436 Climate Model annotations, silver_ratio 5:1, 10 epochs, LR 5e-6, batch 8.
 
 Held-out Climate Model results:
 
